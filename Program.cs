@@ -1,12 +1,12 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Lỗi: Connection string được khai báo trực tiếp
-// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 
-// Đăng ký NpgsqlDataSource vào DI container
-// Sửa: Sử dụng connection string từ biến môi trường
 builder.Services.AddNpgsqlDataSource(builder.Configuration.GetConnectionString("DefaultConnection")!); // Sửa: Lấy connection string từ cấu hình
 
 builder.Services.AddControllers();
@@ -16,11 +16,37 @@ builder.Services.AddCors(options =>
   {
     policy.WithOrigins("http://localhost:3000")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+             .AllowCredentials();
   });
 });
 builder.Services.AddOpenApi();
-
+var jwtConfig = builder.Configuration.GetSection("Jwt");
+var key = Encoding.UTF8.GetBytes(jwtConfig["Key"]!);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+  .AddJwtBearer(options =>
+  {
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+      ValidateIssuer = true,
+      ValidateAudience = true,
+      ValidateLifetime = true,
+      ValidateIssuerSigningKey = true,
+      ValidIssuer = jwtConfig["Issuer"],
+      ValidAudience = jwtConfig["Audience"],
+      IssuerSigningKey = new SymmetricSecurityKey(key),
+      NameClaimType = ClaimTypes.NameIdentifier,
+      RoleClaimType = ClaimTypes.Role
+    };
+     options.Events = new JwtBearerEvents
+    {
+      OnAuthenticationFailed = ctx =>
+      {
+        Console.WriteLine("JWT Authentication Failed: " + ctx.Exception?.Message);
+        return Task.CompletedTask;
+      }
+    };
+  });
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -32,8 +58,10 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-// Enable CORS
 app.UseCors("AllowNext");
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.Use(async (context, next) =>
 {
   if (context.Request.Method == HttpMethods.Options)
@@ -61,7 +89,6 @@ app.MapGet("/",
       }
     });
 
-app.UseAuthorization();
 
 app.MapControllers();
 app.Run();
