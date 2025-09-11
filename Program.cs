@@ -18,7 +18,7 @@ builder.Services.AddCors(options =>
 {
   options.AddPolicy("AllowNext", policy =>
   {
-    policy.WithOrigins("http://localhost:3000", "https://be-dotnet-ecommerce1.onrender.com")
+    policy.WithOrigins("http://localhost:3000", "https://fe-ecommerce1.vercel.app")
           .AllowAnyHeader()
           .AllowAnyMethod()
           .AllowCredentials();
