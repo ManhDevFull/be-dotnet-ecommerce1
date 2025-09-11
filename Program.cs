@@ -6,31 +6,37 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-builder.Services.AddNpgsqlDataSource(builder.Configuration.GetConnectionString("DefaultConnection")!);
+// DB
+builder.Services.AddNpgsqlDataSource(
+    builder.Configuration.GetConnectionString("DefaultConnection")!
+);
 
 builder.Services.AddControllers();
+
+// CORS
 builder.Services.AddCors(options =>
 {
   options.AddPolicy("AllowNext", policy =>
   {
     policy.WithOrigins("http://localhost:3000", "https://be-dotnet-ecommerce1.onrender.com")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-             .AllowCredentials();
+          .AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowCredentials();
   });
 });
+
 builder.Services.AddOpenApi();
+
+// JWT config từ env
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 
-// var jwtConfig = builder.Configuration.GetSection("Jwt");
 if (string.IsNullOrEmpty(jwtKey))
-{
   throw new Exception("JWT Key is missing. Please set env JWT__KEY");
-}
+
 var key = Encoding.UTF8.GetBytes(jwtKey);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
   .AddJwtBearer(options =>
   {
@@ -55,6 +61,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       }
     };
   });
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -63,13 +70,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseRouting();
-
 app.UseCors("AllowNext");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// handle preflight
 app.Use(async (context, next) =>
 {
   if (context.Request.Method == HttpMethods.Options)
@@ -80,6 +86,7 @@ app.Use(async (context, next) =>
   await next();
 });
 
+// test db connection
 app.MapGet("/",
     async () =>
     {
@@ -95,7 +102,6 @@ app.MapGet("/",
         return Results.Json(new { message = "Connection Fail", error = ex.Message });
       }
     });
-
 
 app.MapControllers();
 app.Run();
