@@ -192,7 +192,6 @@ namespace dotnet.Controllers
           data = new
           {
             accessToken = newAccessToken
-            // refresh token is in cookie
           }
         });
       }
@@ -220,7 +219,7 @@ namespace dotnet.Controllers
         new Claim(ClaimTypes.Email, email),
         new Claim(ClaimTypes.Role, rule),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-      };
+    };
       var token = new JwtSecurityToken(
           issuer: jwtConfig["Issuer"],
           audience: jwtConfig["Audience"],
@@ -231,5 +230,6 @@ namespace dotnet.Controllers
 
       return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
   }
 }
