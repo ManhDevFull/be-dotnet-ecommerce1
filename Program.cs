@@ -7,22 +7,30 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddNpgsqlDataSource(builder.Configuration.GetConnectionString("DefaultConnection")!); // Sửa: Lấy connection string từ cấu hình
+builder.Services.AddNpgsqlDataSource(builder.Configuration.GetConnectionString("DefaultConnection")!);
 
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
   options.AddPolicy("AllowNext", policy =>
   {
-    policy.WithOrigins("http://localhost:3000", "https://fe-ecommerce1.vercel.app")
+    policy.WithOrigins("http://localhost:3000", "https://be-dotnet-ecommerce1.onrender.com")
             .AllowAnyHeader()
             .AllowAnyMethod()
              .AllowCredentials();
   });
 });
 builder.Services.AddOpenApi();
-var jwtConfig = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtConfig["Key"]!);
+var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+// var jwtConfig = builder.Configuration.GetSection("Jwt");
+if (string.IsNullOrEmpty(jwtKey))
+{
+  throw new Exception("JWT Key is missing. Please set env JWT__KEY");
+}
+var key = Encoding.UTF8.GetBytes(jwtKey);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
   .AddJwtBearer(options =>
   {
@@ -32,13 +40,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       ValidateAudience = true,
       ValidateLifetime = true,
       ValidateIssuerSigningKey = true,
-      ValidIssuer = jwtConfig["Issuer"],
-      ValidAudience = jwtConfig["Audience"],
+      ValidIssuer = jwtIssuer,
+      ValidAudience = jwtAudience,
       IssuerSigningKey = new SymmetricSecurityKey(key),
       NameClaimType = ClaimTypes.NameIdentifier,
       RoleClaimType = ClaimTypes.Role
     };
-     options.Events = new JwtBearerEvents
+    options.Events = new JwtBearerEvents
     {
       OnAuthenticationFailed = ctx =>
       {
@@ -77,8 +85,7 @@ app.MapGet("/",
     {
       try
       {
-        // Sửa: Sử dụng connection string từ cấu hình
-        await using var conn = new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")!); // Sửa: Lấy connection string từ cấu hình
+        await using var conn = new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")!);
         await conn.OpenAsync();
 
         return Results.Json(new { message = "Connection Success" });
