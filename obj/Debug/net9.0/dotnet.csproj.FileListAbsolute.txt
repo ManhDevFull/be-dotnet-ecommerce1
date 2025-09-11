@@ -46,3 +46,13 @@
 /run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Npgsql.dll
 /run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
 /run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Npgsql.DependencyInjection.dll
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/obj/Debug/net9.0/dotnet.sourcelink.json
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/BCrypt.Net-Next.dll
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Microsoft.IdentityModel.Abstractions.dll
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Microsoft.IdentityModel.Logging.dll
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.dll
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/Microsoft.IdentityModel.Tokens.dll
+/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll

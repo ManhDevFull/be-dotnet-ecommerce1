@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "HuXb47Fo/UE=",
+  "dgSpecHash": "htpFMXRBz4k=",
   "success": true,
   "projectFilePath": "/run/media/manh/01DB60055A8FAD30/Ecommerce/BackEnd/dotnet/dotnet.csproj",
   "expectedPackageFiles": [
+    "/home/manh/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512",
+    "/home/manh/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/9.0.8/microsoft.aspnetcore.authentication.jwtbearer.9.0.8.nupkg.sha512",
     "/home/manh/.nuget/packages/microsoft.aspnetcore.openapi/9.0.8/microsoft.aspnetcore.openapi.9.0.8.nupkg.sha512",
     "/home/manh/.nuget/packages/microsoft.entityframeworkcore/9.0.8/microsoft.entityframeworkcore.9.0.8.nupkg.sha512",
     "/home/manh/.nuget/packages/microsoft.entityframeworkcore.abstractions/9.0.8/microsoft.entityframeworkcore.abstractions.9.0.8.nupkg.sha512",
@@ -18,10 +20,17 @@
     "/home/manh/.nuget/packages/microsoft.extensions.logging.abstractions/9.0.8/microsoft.extensions.logging.abstractions.9.0.8.nupkg.sha512",
     "/home/manh/.nuget/packages/microsoft.extensions.options/9.0.8/microsoft.extensions.options.9.0.8.nupkg.sha512",
     "/home/manh/.nuget/packages/microsoft.extensions.primitives/9.0.8/microsoft.extensions.primitives.9.0.8.nupkg.sha512",
+    "/home/manh/.nuget/packages/microsoft.identitymodel.abstractions/8.14.0/microsoft.identitymodel.abstractions.8.14.0.nupkg.sha512",
+    "/home/manh/.nuget/packages/microsoft.identitymodel.jsonwebtokens/8.14.0/microsoft.identitymodel.jsonwebtokens.8.14.0.nupkg.sha512",
+    "/home/manh/.nuget/packages/microsoft.identitymodel.logging/8.14.0/microsoft.identitymodel.logging.8.14.0.nupkg.sha512",
+    "/home/manh/.nuget/packages/microsoft.identitymodel.protocols/8.0.1/microsoft.identitymodel.protocols.8.0.1.nupkg.sha512",
+    "/home/manh/.nuget/packages/microsoft.identitymodel.protocols.openidconnect/8.0.1/microsoft.identitymodel.protocols.openidconnect.8.0.1.nupkg.sha512",
+    "/home/manh/.nuget/packages/microsoft.identitymodel.tokens/8.14.0/microsoft.identitymodel.tokens.8.14.0.nupkg.sha512",
     "/home/manh/.nuget/packages/microsoft.openapi/1.6.17/microsoft.openapi.1.6.17.nupkg.sha512",
     "/home/manh/.nuget/packages/npgsql/9.0.3/npgsql.9.0.3.nupkg.sha512",
     "/home/manh/.nuget/packages/npgsql.dependencyinjection/9.0.3/npgsql.dependencyinjection.9.0.3.nupkg.sha512",
-    "/home/manh/.nuget/packages/npgsql.entityframeworkcore.postgresql/9.0.4/npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512"
+    "/home/manh/.nuget/packages/npgsql.entityframeworkcore.postgresql/9.0.4/npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512",
+    "/home/manh/.nuget/packages/system.identitymodel.tokens.jwt/8.14.0/system.identitymodel.tokens.jwt.8.14.0.nupkg.sha512"
   ],
   "logs": []
 }
