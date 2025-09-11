@@ -4,7 +4,7 @@ WORKDIR /src
 
 # copy file solution và project để restore
 COPY *.sln .
-COPY dotnet.csproj ./   # <--- ở đây tên project chính của bạn
+COPY dotnet.csproj ./
 
 RUN dotnet restore dotnet.csproj
 
@@ -16,4 +16,4 @@ RUN dotnet publish dotnet.csproj -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "dotnet.dll"]   # <--- thay bằng đúng tên DLL sau khi build
+ENTRYPOINT ["dotnet", "dotnet.dll"]
