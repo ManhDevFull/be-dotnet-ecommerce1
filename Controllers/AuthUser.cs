@@ -47,13 +47,13 @@ namespace dotnet.Controllers
         var userName = $"{reader.GetString(2)} {reader.GetString(3)}";
         var rule = reader.GetInt32(4).ToString();
 
-        // 🔥 BỔ SUNG: Generate access token + refresh token
+        // tạo access token + refresh token
         var accessToken = GenerateJwtToken(userId, userEmail, rule);
         var refreshToken = GenerateRefreshToken();
 
-        reader.Close(); // ✅ FIX: ensure reader closed before update
+        reader.Close();
 
-        // 🔥 BỔ SUNG: lưu refresh token + expiry trực tiếp vào bảng account
+        // lưu refresh token vào DB
         await using var updateCmd = new NpgsqlCommand(
           "UPDATE account SET refresh_token = @rt, refresh_token_expires = @exp WHERE _id = @id",
           conn
@@ -78,9 +78,8 @@ namespace dotnet.Controllers
           status = 200,
           data = new
           {
-            accessToken, // access token trả về body để client sử dụng
+            accessToken,
             user = new { id = userId, name = userName, email = userEmail, rule }
-            // 🔥 NOTE: refreshToken không cần trả body vì đã set cookie HttpOnly
           }
         });
       }
@@ -90,13 +89,11 @@ namespace dotnet.Controllers
       }
     }
 
-    // 🔥 BỔ SUNG: logout endpoint để revoke refresh token và xoá cookie
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
       try
       {
-        // đọc cookie nếu có
         var cookieRt = Request.Cookies["refreshToken"];
         if (!string.IsNullOrEmpty(cookieRt))
         {
@@ -109,7 +106,6 @@ namespace dotnet.Controllers
           await cmd.ExecuteNonQueryAsync();
         }
 
-        // xoá cookie ở client
         Response.Cookies.Delete("refreshToken", new CookieOptions
         {
           HttpOnly = true,
@@ -126,13 +122,12 @@ namespace dotnet.Controllers
       }
     }
 
-    [AllowAnonymous] // ✅ FIX: allow anonymous so client can refresh without access token
+    [AllowAnonymous]
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest dto)
     {
       try
       {
-        // 🔥 BỔ SUNG: support reading refresh token from cookie if dto null/empty
         var providedRt = dto?.RefreshToken;
         var cookieRt = Request.Cookies["refreshToken"];
         var refreshTokenToCheck = !string.IsNullOrEmpty(providedRt) ? providedRt : cookieRt;
@@ -159,7 +154,6 @@ namespace dotnet.Controllers
         if (expires < DateTime.UtcNow)
           return Unauthorized(new { message = "Refresh token expired" });
 
-        // 🔥 BỔ SUNG: rotate refresh token (tạo refresh mới, lưu DB, set cookie)
         var newRefreshToken = GenerateRefreshToken();
         reader.Close();
 
@@ -172,10 +166,8 @@ namespace dotnet.Controllers
         updateCmd.Parameters.AddWithValue("id", int.Parse(userId));
         await updateCmd.ExecuteNonQueryAsync();
 
-        // cấp access token mới
         var newAccessToken = GenerateJwtToken(userId, email, rule);
 
-        // set cookie mới (rotate)
         var cookieOptions = new CookieOptions
         {
           HttpOnly = true,
@@ -189,10 +181,7 @@ namespace dotnet.Controllers
         return Ok(new
         {
           status = 200,
-          data = new
-          {
-            accessToken = newAccessToken
-          }
+          data = new { accessToken = newAccessToken }
         });
       }
       catch (Exception ex)
@@ -201,7 +190,6 @@ namespace dotnet.Controllers
       }
     }
 
-    // 🔥 BỔ SUNG: tạo refresh token ngẫu nhiên (sử dụng GUID -> base64)
     private string GenerateRefreshToken()
     {
       return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
@@ -209,8 +197,11 @@ namespace dotnet.Controllers
 
     private string GenerateJwtToken(string userId, string email, string rule)
     {
-      var jwtConfig = _config.GetSection("Jwt");
-      var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig["Key"]!));
+      var jwtKey = _config["Jwt:Key"];
+      var jwtIssuer = _config["Jwt:Issuer"];
+      var jwtAudience = _config["Jwt:Audience"];
+
+      var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!));
       var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
       var claims = new[]
@@ -219,10 +210,11 @@ namespace dotnet.Controllers
         new Claim(ClaimTypes.Email, email),
         new Claim(ClaimTypes.Role, rule),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
+      };
+
       var token = new JwtSecurityToken(
-          issuer: jwtConfig["Issuer"],
-          audience: jwtConfig["Audience"],
+          issuer: jwtIssuer,
+          audience: jwtAudience,
           claims: claims,
           expires: DateTime.UtcNow.AddMinutes(1),
           signingCredentials: creds
@@ -230,6 +222,5 @@ namespace dotnet.Controllers
 
       return new JwtSecurityTokenHandler().WriteToken(token);
     }
-
   }
 }
