@@ -3,6 +3,8 @@ using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using System.Security.Claims;
 using System.Text;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +14,7 @@ builder.Services.AddNpgsqlDataSource(
 );
 
 builder.Services.AddControllers();
-
+builder.Services.AddHttpClient();
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -61,6 +63,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       }
     };
   });
+// Chay local thi bat doan nay len
+// if (FirebaseApp.DefaultInstance == null)
+// {
+//     FirebaseApp.Create(new AppOptions()
+//     {
+//         Credential = GoogleCredential.FromFile("vertex.json")
+//     });
+// }
+// Push len git thi bat doan nay len
+if (FirebaseApp.DefaultInstance == null)
+{
+    var json = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS_JSON");
+    FirebaseApp.Create(new AppOptions()
+    {
+        Credential = GoogleCredential.FromJson(json)
+    });
+}
+
 
 var app = builder.Build();
 
@@ -85,23 +105,5 @@ app.Use(async (context, next) =>
   }
   await next();
 });
-
-// test db connection
-app.MapGet("/",
-    async () =>
-    {
-      try
-      {
-        await using var conn = new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")!);
-        await conn.OpenAsync();
-
-        return Results.Json(new { message = "Connection Success" });
-      }
-      catch (Exception ex)
-      {
-        return Results.Json(new { message = "Connection Fail", error = ex.Message });
-      }
-    });
-
 app.MapControllers();
 app.Run();
