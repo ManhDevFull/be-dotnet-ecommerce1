@@ -75,22 +75,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     };
   });
 // Chay local thi bat doan nay len
-// if (FirebaseApp.DefaultInstance == null)
-// {
-//     FirebaseApp.Create(new AppOptions()
-//     {
-//         Credential = GoogleCredential.FromFile("vertex.json")
-//     });
-// }
-// Push len git thi bat doan nay len
 if (FirebaseApp.DefaultInstance == null)
 {
-    var json = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS_JSON");
     FirebaseApp.Create(new AppOptions()
     {
-        Credential = GoogleCredential.FromJson(json)
+        Credential = GoogleCredential.FromFile("vertex.json")
     });
 }
+// Push len git thi bat doan nay len
+// if (FirebaseApp.DefaultInstance == null)
+// {
+//     var json = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS_JSON");
+//     FirebaseApp.Create(new AppOptions()
+//     {
+//         Credential = GoogleCredential.FromJson(json)
+//     });
+// }
 
 
 var app = builder.Build();
