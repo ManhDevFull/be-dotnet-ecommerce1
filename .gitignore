@@ -1,4 +1,8 @@
-vertext.json
-appsetting.json
+appsettings.json
+appsettings.*.json
 /obj
 /bin
+bin/
+obj/
+vertex.json
+appsettings.json
