@@ -1,24 +1,20 @@
 namespace be_dotnet_ecommerce1.Model
 {
-    public class Account
-    {
-        public int _id { get; set; }              // Khóa chính (PK)
+  public class Account
+  {
+    public int id { get; set; }
+    public required string email { get; set; }
+    public string? lastname { get; set; }
+    public string? firstname { get; set; }
+    public DateTime? bod { get; set; }
+    public string? password { get; set; }
+    public int role { get; set; }
+    public string? avatarimg { get; set; }
+    public DateTime? createdate { get; set; }
+    public DateTime? updatedate { get; set; }
+    public bool? isdeleted { get; set; }
+    public string? refreshtoken { get; set; }
+    public DateTime? refreshtokenexpires { get; set; }
 
-        public string email { get; set; } = null!;
-
-        public string password { get; set; } = null!;
-
-        public string? first_name { get; set; }
-
-        public string? last_name { get; set; }
-
-        public int rule { get; set; }          
-
-        public string? avatar_img { get; set; }
-
-        // Token quản lý refresh
-        public string? refresh_token { get; set; }
-
-        public DateTime? refresh_token_expires { get; set; }
-    }
+  }
 }

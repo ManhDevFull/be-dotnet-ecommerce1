@@ -67,7 +67,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     };
     options.Events = new JwtBearerEvents
     {
-      OnAuthenticationFailed = ctx =>
+      OnForbidden = context =>
+      {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        context.Response.ContentType = "application/json";
+
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+          success = false,
+          message = "Bạn không có quyền truy cập tài nguyên này",
+          code = 403
+        });
+
+        return context.Response.WriteAsync(result);
+      },
+             OnAuthenticationFailed = ctx =>
       {
         Console.WriteLine("JWT Authentication Failed: " + ctx.Exception?.Message);
         return Task.CompletedTask;
@@ -77,10 +91,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Chay local thi bat doan nay len
 if (FirebaseApp.DefaultInstance == null)
 {
-    FirebaseApp.Create(new AppOptions()
-    {
-        Credential = GoogleCredential.FromFile("vertex.json")
-    });
+  FirebaseApp.Create(new AppOptions()
+  {
+    Credential = GoogleCredential.FromFile("vertex.json")
+  });
 }
 // Push len git thi bat doan nay len
 // if (FirebaseApp.DefaultInstance == null)
