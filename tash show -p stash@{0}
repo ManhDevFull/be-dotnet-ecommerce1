@@ -1,0 +1,29 @@
+[33m01ae175[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/category[m[33m)[m HEAD@{0}: checkout: moving from develop to feature/category
+[33m99d65c7[m[33m ([m[1;31morigin/feature/admin[m[33m, [m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m HEAD@{1}: checkout: moving from 01ae1757e85b5e2ebc754d8711035a38ed6ff39a to develop
+[33m01ae175[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/category[m[33m)[m HEAD@{2}: checkout: moving from feature/category to 01ae175
+[33m01ae175[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/category[m[33m)[m HEAD@{3}: commit: befere merge develop
+[33mf249b1a[m HEAD@{4}: checkout: moving from develop to feature/category
+[33m99d65c7[m[33m ([m[1;31morigin/feature/admin[m[33m, [m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m HEAD@{5}: checkout: moving from feature/category to develop
+[33mf249b1a[m HEAD@{6}: reset: moving to HEAD
+[33mf249b1a[m HEAD@{7}: reset: moving to HEAD
+[33mf249b1a[m HEAD@{8}: commit: Remove appsettings.json from repo to protect secrets
+[33m9009af3[m HEAD@{9}: reset: moving to HEAD~1
+[33m78af4f0[m HEAD@{10}: commit: update
+[33m9009af3[m HEAD@{11}: reset: moving to 9009af35cb06b5e082351332b6fb2fc0319f6b8b
+[33m7290d50[m HEAD@{12}: filter-branch: rewrite
+[33m94cb814[m HEAD@{13}: commit: Remove tracked secret file
+[33m3bf669c[m HEAD@{14}: commit: update category
+[33m9009af3[m HEAD@{15}: reset: moving to 9009af35cb06b5e082351332b6fb2fc0319f6b8b
+[33m53cdd8b[m HEAD@{16}: commit: first api for category
+[33mc4e0869[m HEAD@{17}: checkout: moving from 376d759dd5584c3eb040a1bd6dc8dfc8e860d5d4 to feature/category
+[33m376d759[m HEAD@{18}: checkout: moving from feature/category to 376d759
+[33mc4e0869[m HEAD@{19}: checkout: moving from main to feature/category
+[33m1c6de6a[m HEAD@{20}: commit: first commit
+[33m144038a[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{21}: checkout: moving from feature/category to main
+[33mc4e0869[m HEAD@{22}: commit (merge): Merge branch 'main' into feature/category
+[33mf89a438[m HEAD@{23}: commit: commit to pull code
+[33madfe111[m[33m ([m[1;31morigin/feature/user[m[33m)[m HEAD@{24}: checkout: moving from main to feature/category
+[33m144038a[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{25}: commit: update code to checkout
+[33m376d759[m HEAD@{26}: checkout: moving from feature/category to main
+[33madfe111[m[33m ([m[1;31morigin/feature/user[m[33m)[m HEAD@{27}: checkout: moving from master to feature/category
+[33m0321442[m HEAD@{28}: commit (initial): category

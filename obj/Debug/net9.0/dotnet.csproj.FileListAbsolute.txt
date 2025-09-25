@@ -1,5 +1,4 @@
 D:\ecommerce\be-dotnet-ecommerce1\bin\Debug\net9.0\appsettings.Development.json
-D:\ecommerce\be-dotnet-ecommerce1\bin\Debug\net9.0\appsettings.json
 D:\ecommerce\be-dotnet-ecommerce1\bin\Debug\net9.0\dotnet.staticwebassets.endpoints.json
 D:\ecommerce\be-dotnet-ecommerce1\bin\Debug\net9.0\dotnet.exe
 D:\ecommerce\be-dotnet-ecommerce1\bin\Debug\net9.0\dotnet.deps.json
