@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
+using be_dotnet_ecommerce1.Data;
+using be_dotnet_ecommerce1.Model;
 using dotnet.Dtos;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
-using System.Text.Json;
+using FirebaseAdmin.Auth;
+using Microsoft.EntityFrameworkCore;
 
 namespace dotnet.Controllers
 {
@@ -14,70 +16,68 @@ namespace dotnet.Controllers
   [Route("[controller]")]
   public class AuthController : ControllerBase
   {
-    private readonly NpgsqlDataSource _dataSource;
+    // OLD: private readonly NpgsqlDataSource _dataSource;
+    private readonly ConnectData _db; // NEW
     private readonly IConfiguration _config;
     private readonly HttpClient _http;
-    public AuthController(NpgsqlDataSource dataSource, IConfiguration config, IHttpClientFactory httpClientFactory)
+
+    // OLD:
+    // public AuthController(NpgsqlDataSource dataSource, IConfiguration config, IHttpClientFactory httpClientFactory)
+    // {
+    //     _dataSource = dataSource;
+    //     _config = config;
+    //     _http = httpClientFactory.CreateClient();
+    // }
+
+    // NEW:
+    public AuthController(ConnectData db, IConfiguration config, IHttpClientFactory httpClientFactory)
     {
-      _dataSource = dataSource;
+      _db = db;
       _config = config;
       _http = httpClientFactory.CreateClient();
     }
+
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest dto)
     {
       try
       {
-        await using var conn = await _dataSource.OpenConnectionAsync();
-
-        await using var cmd = new NpgsqlCommand(
-            "SELECT _id, password, first_name, last_name, rule, avatar_img FROM account WHERE email = @e",
-            conn
-        );
-        cmd.Parameters.AddWithValue("e", dto.Email);
-        await using var reader = await cmd.ExecuteReaderAsync();
-
-        if (!await reader.ReadAsync())
+        var user = await _db.Set<Account>().FirstOrDefaultAsync(u => u.email == dto.Email);
+        if (user == null)
           return Unauthorized(new { message = "Email not found" });
 
-        var hashedPass = reader.GetString(1);
-        if (!BCrypt.Net.BCrypt.Verify(dto.Password, hashedPass))
+        if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.password))
           return Unauthorized(new { message = "Invalid password" });
 
-        var userId = reader.GetInt32(0);
-        var userEmail = dto.Email;
-        var userName = $"{reader.GetString(2)} {reader.GetString(3)}";
-        var rule = reader.GetInt32(4).ToString();
-        string? avatar = null;
-        if (!reader.IsDBNull(5))
-        {
-          avatar = reader.GetString(5);
-        }
-        // tạo access token + refresh token
-        var accessToken = GenerateJwtToken(userId.ToString(), userEmail, rule);
+        var accessToken = GenerateJwtToken(user.id.ToString(), user.email, user.role.ToString());
         var refreshToken = GenerateRefreshToken();
 
-        reader.Close();
+        user.refreshtoken = refreshToken;
+        user.refreshtokenexpires = DateTime.UtcNow.AddDays(7);
+        await _db.SaveChangesAsync();
 
-        await using var updateCmd = new NpgsqlCommand(
-          "UPDATE account SET refresh_token = @rt, refresh_token_expires = @exp WHERE _id = @id",
-          conn
-        );
-        updateCmd.Parameters.AddWithValue("rt", refreshToken);
-        updateCmd.Parameters.AddWithValue("exp", DateTime.UtcNow.AddDays(7));
-        updateCmd.Parameters.AddWithValue("id", userId);
-        await updateCmd.ExecuteNonQueryAsync();
 
-        var cookieOptions = new CookieOptions
+        var accessCookieOptions = new CookieOptions
         {
           HttpOnly = true,
           Secure = false,
-          SameSite = SameSiteMode.Strict,
+          SameSite = SameSiteMode.Lax,
+          Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+          Path = "/"
+        };
+        Response.Cookies.Append("accessToken", accessToken, accessCookieOptions);
+
+        // cookie for refresh token (long lived)
+        var refreshCookieOptions = new CookieOptions
+        {
+          HttpOnly = true,
+          Secure = false,
+          SameSite = SameSiteMode.Lax,
           Expires = DateTimeOffset.UtcNow.AddDays(7),
           Path = "/"
         };
-        Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+        Response.Cookies.Append("refreshToken", refreshToken, refreshCookieOptions);
 
         return Ok(new
         {
@@ -85,7 +85,7 @@ namespace dotnet.Controllers
           data = new
           {
             accessToken,
-            user = new { id = userId, name = userName, email = userEmail, avatarUrl = avatar, rule }
+            user = new { id = user.id, name = $"{user.firstname} {user.lastname}", email = user.email, avatarUrl = user.avatarimg, rule = user.role }
           }
         });
       }
@@ -103,24 +103,25 @@ namespace dotnet.Controllers
         var cookieRt = Request.Cookies["refreshToken"];
         if (!string.IsNullOrEmpty(cookieRt))
         {
-          await using var conn = await _dataSource.OpenConnectionAsync();
-          await using var cmd = new NpgsqlCommand(
-            "UPDATE account SET refresh_token = NULL, refresh_token_expires = NULL WHERE refresh_token = @rt",
-            conn
-          );
-          cmd.Parameters.AddWithValue("rt", cookieRt);
-          await cmd.ExecuteNonQueryAsync();
+          var user = await _db.Set<Account>().FirstOrDefaultAsync(u => u.refreshtoken == cookieRt);
+          if (user != null)
+          {
+            user.refreshtoken = null;
+            user.refreshtokenexpires = null;
+
+            _db.Entry(user).Property(u => u.refreshtoken).IsModified = true;
+            _db.Entry(user).Property(u => u.refreshtokenexpires).IsModified = true;
+
+            var result = await _db.SaveChangesAsync();
+            Console.WriteLine($"Rows affected: {result}");
+
+          }
         }
 
-        Response.Cookies.Delete("refreshToken", new CookieOptions
-        {
-          HttpOnly = true,
-          Secure = true,
-          SameSite = SameSiteMode.Strict,
-          Path = "/"
-        });
+        Response.Cookies.Delete("refreshToken");
+        Response.Cookies.Delete("accessToken");
 
-        return Ok(new { status = 200, message = "Logged out" });
+        return Ok(new { status = 200, message = "Logged out successfully" });
       }
       catch (Exception ex)
       {
@@ -129,71 +130,52 @@ namespace dotnet.Controllers
     }
 
     [HttpPost("social-auth")]
+    [AllowAnonymous]
     public async Task<IActionResult> ExchangeFirebaseToken([FromBody] TokenRequest dto)
     {
       if (string.IsNullOrEmpty(dto.IdToken))
         return BadRequest(new { message = "Missing Firebase IdToken" });
-
       try
       {
-        // 1) Verify token với Firebase Admin
-        var decoded = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance
-            .VerifyIdTokenAsync(dto.IdToken);
+        // Verify với Firebase
+        var decoded = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(dto.IdToken);
 
         var uid = decoded.Uid;
         var email = decoded.Claims.ContainsKey("email") ? decoded.Claims["email"]?.ToString() : null;
         var name = decoded.Claims.ContainsKey("name") ? decoded.Claims["name"]?.ToString() : null;
         var avatarUrl = decoded.Claims.ContainsKey("picture") ? decoded.Claims["picture"]?.ToString() : null;
 
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        // OLD: query tay
+        // await using var conn = await _dataSource.OpenConnectionAsync();
+        // int userId;
+        // string rule;
 
-        int userId;
-        string rule;
-
-        await using (var checkCmd = new NpgsqlCommand("SELECT _id, rule FROM account WHERE email = @e", conn))
+        // NEW: EF Core
+        var user = await _db.Set<Account>().FirstOrDefaultAsync(u => u.email == email);
+        if (user == null)
         {
-          checkCmd.Parameters.AddWithValue("e", (object?)email ?? DBNull.Value);
-          await using var reader = await checkCmd.ExecuteReaderAsync();
-          if (await reader.ReadAsync())
-          {
-            userId = reader.GetInt32(0);
-            rule = reader.GetInt32(1).ToString();
-            reader.Close();
-          }
-          else
-          {
-            reader.Close();
-            var parts = (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var fn = parts.Length > 0 ? parts[0] : "";
-            var ln = parts.Length > 1 ? parts[^1] : "";
+          var parts = (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+          var fn = parts.Length > 0 ? parts[0] : "";
+          var ln = parts.Length > 1 ? parts[^1] : "";
 
-            await using var insertCmd = new NpgsqlCommand(
-                "INSERT INTO account (email, first_name, last_name, avatar_img, rule) VALUES (@e, @fn, @ln, @avt, @rule) RETURNING _id",
-                conn
-            );
-            insertCmd.Parameters.AddWithValue("e", (object?)email ?? DBNull.Value);
-            insertCmd.Parameters.AddWithValue("fn", (object?)fn ?? DBNull.Value);
-            insertCmd.Parameters.AddWithValue("ln", (object?)ln ?? DBNull.Value);
-            insertCmd.Parameters.AddWithValue("rule", 3);
-            insertCmd.Parameters.AddWithValue("avt", (object?)avatarUrl ?? DBNull.Value);
-            var scalar = await insertCmd.ExecuteScalarAsync();
-            if (scalar == null) return StatusCode(500, new { message = "Insert user failed" });
-            userId = Convert.ToInt32(scalar);
-            rule = "3";
-          }
+          user = new Account
+          {
+            email = email ?? $"{uid}@firebase.com",
+            firstname = fn,
+            lastname = ln,
+            avatarimg = avatarUrl,
+            role = 3
+          };
+          _db.Add(user);
+          await _db.SaveChangesAsync();
         }
 
-        var accessToken = GenerateJwtToken(userId.ToString(), email ?? $"{uid}@firebase.com", rule);
+        var accessToken = GenerateJwtToken(user.id.ToString(), user.email, user.role.ToString());
         var refreshToken = GenerateRefreshToken();
 
-        await using (var updateCmd = new NpgsqlCommand(
-    "UPDATE account SET refresh_token = @rt, refresh_token_expires = @exp WHERE _id = @id", conn))
-        {
-          updateCmd.Parameters.AddWithValue("rt", refreshToken);
-          updateCmd.Parameters.AddWithValue("exp", DateTime.UtcNow.AddDays(7));
-          updateCmd.Parameters.AddWithValue("id", userId);
-          await updateCmd.ExecuteNonQueryAsync();
-        }
+        user.refreshtoken = refreshToken;
+        user.refreshtokenexpires = DateTime.UtcNow.AddDays(7);
+        await _db.SaveChangesAsync();
 
         var cookieOptions = new CookieOptions
         {
@@ -208,11 +190,7 @@ namespace dotnet.Controllers
         return Ok(new
         {
           status = 200,
-          data = new
-          {
-            accessToken,
-            user = new { id = userId, name, avatarUrl, email, rule }
-          }
+          data = new { accessToken, user = new { id = user.id, name, avatarUrl, email, rule = user.role } }
         });
       }
       catch (Exception ex)
@@ -220,6 +198,7 @@ namespace dotnet.Controllers
         return Unauthorized(new { message = "Invalid Firebase IdToken", detail = ex.Message });
       }
     }
+
     [AllowAnonymous]
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest dto)
@@ -233,38 +212,22 @@ namespace dotnet.Controllers
         if (string.IsNullOrEmpty(refreshTokenToCheck))
           return Unauthorized(new { message = "No refresh token provided" });
 
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-          "SELECT _id, email, rule, refresh_token_expires FROM account WHERE refresh_token = @rt",
-          conn
-        );
-        cmd.Parameters.AddWithValue("rt", refreshTokenToCheck);
+        // OLD: Npgsql
+        // await using var conn = await _dataSource.OpenConnectionAsync();
+        // await using var cmd = new NpgsqlCommand("SELECT _id, email, rule, refresh_token_expires FROM account WHERE refresh_token = @rt", conn);
+        // cmd.Parameters.AddWithValue("rt", refreshTokenToCheck);
 
-        await using var reader = await cmd.ExecuteReaderAsync();
-        if (!await reader.ReadAsync())
-          return Unauthorized(new { message = "Invalid refresh token" });
-
-        var userId = reader.GetInt32(0).ToString();
-        var email = reader.GetString(1);
-        var rule = reader.GetInt32(2).ToString();
-        var expires = reader.GetDateTime(3);
-
-        if (expires < DateTime.UtcNow)
-          return Unauthorized(new { message = "Refresh token expired" });
+        // NEW: EF Core
+        var user = await _db.Set<Account>().FirstOrDefaultAsync(u => u.refreshtoken == refreshTokenToCheck);
+        if (user == null || user.refreshtokenexpires < DateTime.UtcNow)
+          return Unauthorized(new { message = "Invalid or expired refresh token" });
 
         var newRefreshToken = GenerateRefreshToken();
-        reader.Close();
+        user.refreshtoken = newRefreshToken;
+        user.refreshtokenexpires = DateTime.UtcNow.AddDays(7);
+        await _db.SaveChangesAsync();
 
-        await using var updateCmd = new NpgsqlCommand(
-          "UPDATE account SET refresh_token = @newRt, refresh_token_expires = @exp WHERE _id = @id",
-          conn
-        );
-        updateCmd.Parameters.AddWithValue("newRt", newRefreshToken);
-        updateCmd.Parameters.AddWithValue("exp", DateTime.UtcNow.AddDays(7));
-        updateCmd.Parameters.AddWithValue("id", int.Parse(userId));
-        await updateCmd.ExecuteNonQueryAsync();
-
-        var newAccessToken = GenerateJwtToken(userId, email, rule);
+        var newAccessToken = GenerateJwtToken(user.id.ToString(), user.email, user.role.ToString());
 
         var cookieOptions = new CookieOptions
         {
@@ -276,11 +239,7 @@ namespace dotnet.Controllers
         };
         Response.Cookies.Append("refreshToken", newRefreshToken, cookieOptions);
 
-        return Ok(new
-        {
-          status = 200,
-          data = new { accessToken = newAccessToken }
-        });
+        return Ok(new { status = 200, data = new { accessToken = newAccessToken } });
       }
       catch (Exception ex)
       {
@@ -288,6 +247,7 @@ namespace dotnet.Controllers
       }
     }
 
+    // ===== Helper functions =====
     private string GenerateRefreshToken()
     {
       return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
@@ -304,17 +264,17 @@ namespace dotnet.Controllers
 
       var claims = new[]
       {
-        new Claim(ClaimTypes.NameIdentifier, userId),
-        new Claim(ClaimTypes.Email, email),
-        new Claim(ClaimTypes.Role, rule),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-      };
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Role, rule),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
 
       var token = new JwtSecurityToken(
           issuer: jwtIssuer,
           audience: jwtAudience,
           claims: claims,
-          expires: DateTime.UtcNow.AddMinutes(1),
+          expires: DateTime.UtcNow.AddMinutes(60),
           signingCredentials: creds
       );
 

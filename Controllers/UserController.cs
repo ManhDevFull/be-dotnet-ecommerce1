@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization; // ✅ thêm để dùng [Authorize]
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
-using dotnet.Dtos;
+using be_dotnet_ecommerce1.Data;
 using System.Security.Claims;
 
 namespace dotnet.Controllers
@@ -10,12 +9,12 @@ namespace dotnet.Controllers
   [Route("[controller]")]
   public class UserController : ControllerBase
   {
-    private readonly NpgsqlDataSource _dataSource;
-    public UserController(NpgsqlDataSource dataSource)
-    {
-      _dataSource = dataSource;
-    }
-   
+       private readonly ConnectData _db;
+
+        public UserController(ConnectData db)
+        {
+            _db = db;
+        }
     [AllowAnonymous]
     [HttpGet]
     public IActionResult GetAll()

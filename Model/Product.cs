@@ -1,0 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace dotnet.Model
+{
+  public class Product
+  {
+    public int id { get; set; }
+    public string nameproduct { get; set; } = null!;
+    public string? brand { get; set; }
+    public string description { get; set; } = null!;
+    public int category { get; set; }
+    public List<string> imageurls { get; set; } = new();
+    public DateTime createdate { get; set; }
+    public DateTime updatedate { get; set; }
+    public bool isdeleted { get; set; }
+  }
+}
