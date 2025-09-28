@@ -17,24 +17,9 @@ namespace be_dotnet_ecommerce1.Repository
     {
       return _connect.categories.Where(c => c.idparent == id).ToList();
     }
-
-    // public List<CategoryAdmin> getCategoryAdmin()
-    // {
-    //   var list = (from c in _connect.categories
-    //               join p in _connect.products on c.id equals p.category into productGroup
-    //               select new CategoryAdmin
-    //               {
-    //                 id = c.id,
-    //                 namecategory = c.namecategory,
-    //                 idparent = c.idparent,
-    //                 product = productGroup.Count()
-    //               }).ToList();
-
-    //   return list;
-    // }
-   public List<CategoryAdmin> getCategoryAdmin()
-        {
-            var sql = @"
+    public List<CategoryAdmin> getCategoryAdmin()
+    {
+      var sql = @"
                 WITH RECURSIVE descendants AS (
                   SELECT id AS root_id, id
                   FROM category
@@ -55,8 +40,8 @@ namespace be_dotnet_ecommerce1.Repository
                 ORDER BY cat.id;
             ";
 
-            var list = _connect.Set<CategoryAdmin>().FromSqlRaw(sql).ToList();
-            return list;
-        }
+      var list = _connect.Set<CategoryAdmin>().FromSqlRaw(sql).ToList();
+      return list;
+    }
   }
 }

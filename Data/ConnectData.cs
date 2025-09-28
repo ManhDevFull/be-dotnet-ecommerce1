@@ -1,4 +1,6 @@
+using System.Reflection.Emit;
 using be_dotnet_ecommerce1.Model;
+using dotnet.Dtos;
 using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +14,9 @@ namespace be_dotnet_ecommerce1.Data
     // public DbSet<CategoryAdmin> categorieAdmin { get; set; }
     public DbSet<CategoryAdmin> CategoryAdmins { get; set; }
     public DbSet<Account> accounts { get; set; }
+    public DbSet<Address> address { get; set; }
     public DbSet<Product> products { get; set; }
+    public DbSet<UserDTO> users { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       modelBuilder.Entity<Category>(entity =>
@@ -23,6 +27,21 @@ namespace be_dotnet_ecommerce1.Data
         entity.Property(e => e.namecategory).HasColumnName("namecategory");
         entity.Property(e => e.idparent).HasColumnName("parent_id");
       });
+      modelBuilder.Entity<Address>(entity =>
+    {
+      entity.ToTable("address");
+      entity.HasKey(e => e.id);
+      entity.Property(e => e.id).HasColumnName("id");
+      entity.Property(e => e.accountid).HasColumnName("accountid");
+      entity.Property(e => e.title).HasColumnName("title");
+      entity.Property(e => e.namerecipient).HasColumnName("namerecipient");
+      entity.Property(e => e.tel).HasColumnName("tel");
+      entity.Property(e => e.codeward).HasColumnName("codeward");
+      entity.Property(e => e.description).HasColumnName("description");
+      entity.Property(e => e.detail).HasColumnName("detail");
+      entity.Property(e => e.createdate).HasColumnName("createdate");
+      entity.Property(e => e.updatedate).HasColumnName("updatedate");
+    });
       modelBuilder.Entity<Account>(entity =>
         {
           entity.ToTable("account");
@@ -64,7 +83,18 @@ namespace be_dotnet_ecommerce1.Data
   entity.Property(e => e.idparent).HasColumnName("idparent");
   entity.Property(e => e.product).HasColumnName("product");
 });
+      modelBuilder.Entity<UserDTO>(entity =>
+      {
+        entity.HasNoKey();
+        entity.ToView(null);
+        entity.Property(e => e.id).HasColumnName("id");
+        entity.Property(e => e.name).HasColumnName("name");
+        entity.Property(e => e.email).HasColumnName("email");
+        entity.Property(e => e.role).HasColumnName("role");
+        entity.Property(e => e.avatarImg).HasColumnName("avatarImg");
+        entity.Property(e => e.tel).HasColumnName("tel");
+        entity.Property(e => e.orders).HasColumnName("orders");
+      });
     }
-
   }
 }
