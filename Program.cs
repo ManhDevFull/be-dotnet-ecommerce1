@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using be_dotnet_ecommerce1.Service.IService;
 using be_dotnet_ecommerce1.Repository.IReopsitory;
 using be_dotnet_ecommerce1.Repository;
+using be_dotnet_ecommerce1.Repository.IRepository;
+using be_dotnet_ecommerce1.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,8 @@ builder.Services.AddDbContext<ConnectData>(options =>
 // đăng ký tự động inject thông qua constructor
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IVariantRepository, VariantRepository>();
+builder.Services.AddScoped<IVariantService, VariantService>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 // CORS

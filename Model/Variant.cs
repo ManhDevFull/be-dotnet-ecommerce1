@@ -8,7 +8,8 @@ namespace dotnet.Model
   public class Variant
   {
     public int id { get; set; }
-    public int productid { get; set; }
+    public int productid { get; set; } //fk
+    public Product? Product { get; set; }
     public string valuevariant { get; set; } = null!; // JSONB
     public int stock { get; set; }
     public int inputprice { get; set; }
@@ -16,5 +17,6 @@ namespace dotnet.Model
     public DateTime createdate { get; set; }
     public DateTime updatedate { get; set; }
     public bool isdeleted { get; set; }
+
   }
 }
