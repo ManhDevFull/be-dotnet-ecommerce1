@@ -13,17 +13,16 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
         }
         public List<VariantDTO> getValueVariant(int id)
         {
-                var data = _connect.Database
-                .SqlQuery<VariantDTO>($@"
-                SELECT DISTINCT 
-                    variant.id AS Id,
-                    jsonb_object_keys(variant.data) AS ValueVariant
-                FROM category
-                JOIN product ON category.id = product.categoryid
-                JOIN variant ON product.id = variant.productid
-                WHERE category.id = {id}")
-                .ToList();
-                return data;
+            var data = _connect.Database
+            .SqlQuery<VariantDTO>($@"
+                SELECT key, array_agg(DISTINCT value) AS values
+                FROM category JOIN product ON (category.id = product.id)
+                JOIN variant on (product.id = category.id)
+                AND category.id = {id} ,
+                    jsonb_each_text(valuevariant)
+                GROUP BY key;")
+            .ToList();
+            return data;
         }
 
     }

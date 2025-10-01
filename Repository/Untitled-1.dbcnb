@@ -1,0 +1,59 @@
+cells:
+  - kind: 2
+    languageId: sql
+    value: "select DISTINCT jsonb_object_keys(valuevariant) FROM\r
+
+      category JOIN product ON (category.id = product.id)\r
+
+      JOIN variant on (product.id = category.id)\r
+
+      AND category.id = 3\r
+
+      \r
+
+      \r
+
+      SELECT * from variant\r
+
+      \r
+
+      SELECT DISTINCT typediscount, discount, starttime, endtime from \r
+
+      product JOIN variant on(product.id = variant.product_id)\r
+
+      JOIN discount_product on (variant.id = discount_product.variant_id)\r
+
+      JOIN discount on(discount.id = discount_product.discount_id)\r
+
+      where product.id = 1\r
+
+      select * from discount\r
+
+      \r
+
+      select * from variant\r
+
+      \r
+
+      \r
+
+      SELECT key, array_agg(DISTINCT value) AS values\r
+
+      FROM category JOIN product ON (category.id = product.id)\r
+
+      JOIN variant on (product.id = category.id)\r
+
+      AND category.id = 3 ,\r
+
+      \     jsonb_each_text(valuevariant)\r
+
+      GROUP BY key;\r
+
+      \r\n"
+    metadata: {}
+metadata:
+  conn:
+    id: iwdSQjg3WX78MtqzkipM3
+    name: Ecommerce1_DB
+  database: ecommerce1
+  schema: public

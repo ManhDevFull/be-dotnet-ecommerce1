@@ -28,6 +28,8 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IVariantRepository, VariantRepository>();
 builder.Services.AddScoped<IVariantService, VariantService>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 // CORS
