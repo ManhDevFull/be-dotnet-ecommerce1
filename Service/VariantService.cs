@@ -11,9 +11,9 @@ namespace be_dotnet_ecommerce1.Service
         {
             _repo = repo;
         }
-        public List<VariantDTO> getValueVariant(int id)
+        public async Task<List<VariantDTO>> getValueVariant(int id)
         {
-            return _repo.getValueVariant(id);
+            return await _repo.getValueVariant(id);
         }
 
     }

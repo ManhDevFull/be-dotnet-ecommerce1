@@ -18,5 +18,11 @@ namespace be_dotnet_ecommerce1.Controllers
             var quantity = _service.getQuantityByIdCategory(id);
             return Ok(quantity);
         }
+        [HttpPost("filter")]
+        public IActionResult FilterProducts(FilterDTO dTO)
+        {
+            return Ok();
+        }
+        // size: [l, m ,x]
     }
 }
