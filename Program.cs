@@ -25,11 +25,12 @@ builder.Services.AddDbContext<ConnectData>(options =>
 {
   options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-// đăng ký tự động inject thông qua constructor
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserReponsitory, UserReponsitory>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IAddressReponsitory, AddressReponsitory>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 // CORS

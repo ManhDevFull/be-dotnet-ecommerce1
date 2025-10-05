@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using be_dotnet_ecommerce1.Data;
 using dotnet.Model;
 using dotnet.Repository.IRepository;

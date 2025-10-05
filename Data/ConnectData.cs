@@ -32,7 +32,7 @@ namespace be_dotnet_ecommerce1.Data
       entity.ToTable("address");
       entity.HasKey(e => e.id);
       entity.Property(e => e.id).HasColumnName("id");
-      entity.Property(e => e.accountid).HasColumnName("accountid");
+      entity.Property(e => e.accountid).HasColumnName("account_id");
       entity.Property(e => e.title).HasColumnName("title");
       entity.Property(e => e.namerecipient).HasColumnName("namerecipient");
       entity.Property(e => e.tel).HasColumnName("tel");
