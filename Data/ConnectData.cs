@@ -95,6 +95,7 @@ namespace be_dotnet_ecommerce1.Data
         entity.Property(e => e.tel).HasColumnName("tel");
         entity.Property(e => e.orders).HasColumnName("orders");
       });
+         modelBuilder.Entity<ProductDTO>().HasNoKey().ToView(null);
     }
   }
 }

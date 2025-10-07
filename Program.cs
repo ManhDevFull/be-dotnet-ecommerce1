@@ -31,6 +31,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserReponsitory, UserReponsitory>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IAddressReponsitory, AddressReponsitory>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductReponsitory, ProductReponsitory>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 // CORS
