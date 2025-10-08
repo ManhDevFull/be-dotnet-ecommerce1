@@ -119,6 +119,7 @@ namespace be_dotnet_ecommerce1.Data
       // review
       modelBuilder.Entity<Review>(entity =>
       {
+        entity.ToTable("review");
         entity.HasKey("id");
         entity.Property(e => e.orderid).HasColumnName("order_id");
       });

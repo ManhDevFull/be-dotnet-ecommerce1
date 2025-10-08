@@ -17,6 +17,7 @@ namespace be_dotnet_ecommerce1.Repository
         public ProductRepository(ConnectData connect)
         {
             _connect = connect;
+            variantRepository = new VariantRepository(_connect);
         }
 
         // public async Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
@@ -82,50 +83,59 @@ namespace be_dotnet_ecommerce1.Repository
         // }
         public async Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
         {
-            var variants = await variantRepository.GetVariantByFilter(dTO) ?? new List<Variant>();
-            var producids = variants.Select(v => v.productid).Distinct().ToList();
+            try
+            {
 
-            var products = await _connect.products
-                .Include(p => p.Category)
-                .Where(p => producids.Contains(p.id))
-                .Select(p => new ProductFilterDTO
-                {
-                    id = p.id,
-                    name = p.nameproduct,
-                    description = p.description,
-                    brand = p.brand,
-                    categoryId = p.categoryId,
-                    categoryName = p.Category != null ? p.Category.namecategory : null,
-                    imgUrls = p.imageurls,
-                    variant = _connect.variants
-                        .Where(v => v.productid == p.id)
-                        .Select(v => new VariantDTO
-                        {
-                            id = v.id,
-                            valuevariant = v.valuevariant,
-                            stock = v.stock,
-                            inputprice = v.inputprice,
-                            price = v.price,
-                            createdate = v.createdate,
-                            updatedate = v.updatedate
-                        }).ToArray(),
-                    discount = (from dp in _connect.discountProducts
-                                join d in _connect.discounts on dp.discountid equals d.id
-                                join v in _connect.variants on dp.variantid equals v.id
-                                where v.productid == p.id
-                                select d).ToArray(),
-                    rating = (from r in _connect.reviews
-                              join o in _connect.orders on r.orderid equals o.id
-                              join v in _connect.variants on o.variantid equals v.id
-                              where (v.productid == p.id)
-                              select (int?)r.rating).Sum() ?? 0,
-                    order = (from o in _connect.orders
-                             join v in _connect.variants on o.variantid equals v.id
-                             where v.productid == p.id
-                             select o).Count()
-                }).ToListAsync();
+                var variants = await variantRepository.GetVariantByFilter(dTO) ?? new List<Variant>();
+                var producids = variants.Select(v => v.productid).Distinct().ToList();
 
-            return products;
+                var products = await _connect.products
+                    .Include(p => p.Category)
+                    .Where(p => producids.Contains(p.id))
+                    .Select(p => new ProductFilterDTO
+                    {
+                        id = p.id,
+                        name = p.nameproduct,
+                        description = p.description,
+                        brand = p.brand,
+                        categoryId = p.categoryId,
+                        categoryName = p.Category != null ? p.Category.namecategory : null,
+                        imgUrls = p.imageurls,
+                        variant = _connect.variants
+                            .Where(v => v.productid == p.id)
+                            .Select(v => new VariantDTO
+                            {
+                                id = v.id,
+                                valuevariant = v.valuevariant,
+                                stock = v.stock,
+                                inputprice = v.inputprice,
+                                price = v.price,
+                                createdate = v.createdate,
+                                updatedate = v.updatedate
+                            }).ToArray(),
+                        discount = (from dp in _connect.discountProducts
+                                    join d in _connect.discounts on dp.discountid equals d.id
+                                    join v in _connect.variants on dp.variantid equals v.id
+                                    where v.productid == p.id
+                                    select d).ToArray(),
+                        rating = (from r in _connect.reviews
+                                  join o in _connect.orders on r.orderid equals o.id
+                                  join v in _connect.variants on o.variantid equals v.id
+                                  where (v.productid == p.id)
+                                  select (int?)r.rating).Sum() ?? 0,
+                        order = (from o in _connect.orders
+                                 join v in _connect.variants on o.variantid equals v.id
+                                 where v.productid == p.id
+                                 select o).Count()
+                    }).ToListAsync();
+                return products;
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex);
+                throw;
+            }
+
         }
 
 

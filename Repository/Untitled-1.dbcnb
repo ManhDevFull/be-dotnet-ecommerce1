@@ -117,9 +117,70 @@ cells:
 
       \r
 
-      \r
+      -----------------------------\r
 
-      \r
+      \ SELECT \r
+
+      \                key, \r
+
+      \                array_agg(DISTINCT value ORDER BY value) AS values\r
+
+      \            FROM (\r
+
+      \                -- Lấy các thuộc tính từ valuevariant\r
+
+      \                SELECT \r
+
+      \                    kv.key::text AS key, \r
+
+      \                    kv.value::text AS value\r
+
+      \                FROM category \r
+
+      \                JOIN product ON category.id = product.category\r
+
+      \                JOIN variant ON product.id = variant.product_id\r
+
+      \                CROSS JOIN LATERAL jsonb_each_text(variant.valuevariant)
+      AS kv(key, value)\r
+
+      \                WHERE category.id = 1\r
+
+      \                AND variant.isdeleted = false\r
+
+      \                AND product.isdeleted = false\r
+
+      \                \r
+
+      \                UNION ALL\r
+
+      \                \r
+
+      \                -- Thêm giá như một thuộc tính\r
+
+      \                SELECT \r
+
+      \                    'price' AS key,\r
+
+      \                    v.price::text AS value\r
+
+      \                FROM category c\r
+
+      \                JOIN product p ON c.id = p.category\r
+
+      \                JOIN variant v ON p.id = v.product_id\r
+
+      \                WHERE c.id = 1\r
+
+      \                AND v.isdeleted = false\r
+
+      \                AND p.isdeleted = false\r
+
+      \            ) AS combined\r
+
+      \            GROUP BY key\r
+
+      \            ORDER BY key\r
 
       \r
 
@@ -263,41 +324,11 @@ cells:
 
       -------------------------------------------\r
 
-      \    SELECT \r
-
-      \    STRING_AGG(\r
-
-      \        CONCAT(\r
-
-      \            '{',\r
-
-      \            '\"id\":', v.id, ',',\r
-
-      \            '\"valuevariant\":', to_jsonb(v.valuevariant), ',',\r
-
-      \            '\"stock\":', v.stock, ',',\r
-
-      \            '\"inputprice\":', v.inputprice, ',',\r
-
-      \            '\"price\":', v.price, ',',\r
-
-      \            '\"createdate\":\"', to_char(v.createdate, 'YYYY-MM-DD
-      HH24:MI:SS'), '\",',\r
-
-      \            '\"updatedate\":\"', to_char(v.updatedate, 'YYYY-MM-DD
-      HH24:MI:SS'), '\"',\r
-
-      \            '}'\r
-
-      \        ), ','\r
-
-      \    ) AS variantJson\r
-
-      FROM variant v\r
-
-      WHERE v.product_id = 1;\r
-
       \r\n"
+    metadata: {}
+  - kind: 2
+    languageId: sql
+    value: ""
     metadata: {}
   - kind: 2
     languageId: sql
@@ -335,7 +366,13 @@ cells:
 
       FROM variant v\r
 
-      WHERE v.product_id = 1;"
+      WHERE v.product_id = 1;\r\n"
+    metadata: {}
+  - kind: 2
+    languageId: sql
+    value: "SELECT * FROM variant WHERE variant ->> 'color' IN ('black')\r
+
+      select * from variant"
     metadata: {}
 metadata:
   conn:

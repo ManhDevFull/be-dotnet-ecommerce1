@@ -52,9 +52,9 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
 
             return data;
         }
-        public async Task<List<Variant>> GetVariantByFilter(FilterDTO dTO)
+        public async Task<List<Variant>> GetVariantByFilter(FilterDTO dTO) // done
         {
-            var sql = "select * from variant where";
+            var sql = "select * from variant";
             var conditions = new List<string>();
             if (dTO.Filter != null)
             {
@@ -65,12 +65,15 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
                     if (value != null)
                     {
                         var values = string.Join(",", value.Select(v => $"'{v}'"));
-                        conditions.Add($"variant ->> '{key}' IN ({values})");
+                        conditions.Add($"valuevariant ->> '{key}' IN ({values})");
                     }
                 }
             }
             if (conditions.Count > 0)
-                sql += string.Join("AND", conditions);
+            {
+                sql += " where " + string.Join(" AND ", conditions);
+                Console.Write(sql);
+            }
             var result = await _connect.variants.FromSqlRaw(sql).ToListAsync();
             return result;
         }

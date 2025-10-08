@@ -19,9 +19,9 @@ namespace be_dotnet_ecommerce1.Controllers
             return Ok(quantity);
         }
         [HttpPost("filter")]
-        public IActionResult FilterProducts([FromBody] FilterDTO dTO)
+        public async Task<IActionResult> FilterProducts([FromBody] FilterDTO dTO)
         {
-            var result = _service.getProductByFilter(dTO);
+            var result = await _service.getProductByFilter(dTO);
             return Ok(result);
         }
     }
