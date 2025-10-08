@@ -20,11 +20,11 @@ namespace be_dotnet_ecommerce1.Controllers
             var list = await _service.getValueVariant(id);
             return Ok(list);
         }
-        [HttpPost]
-        public IActionResult resFilter(FilterDTO dTO)
-        {
-            Console.WriteLine((JsonSerializer.Serialize(dTO)));
-            return Ok(dTO);
-        }
+        // [HttpPost("filter")]
+        // public IActionResult resFilter(FilterDTO dTO)
+        // {
+        //     var result = _service.GetVariantByFilter(dTO);
+        //     return Ok(dTO);
+        // }
     }
 }

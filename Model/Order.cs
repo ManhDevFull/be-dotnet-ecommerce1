@@ -17,5 +17,7 @@ namespace dotnet.Model
     public DateTime? receivedate { get; set; }
     public string? typepay { get; set; }
     public string? statuspay { get; set; }
+    public Variant? variant { get; set; }
+    public Review? review { get; set; }
   }
 }

@@ -1,5 +1,7 @@
+using be_dotnet_ecommerce1.Controllers;
 using be_dotnet_ecommerce1.Data;
 using be_dotnet_ecommerce1.Dtos;
+using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace be_dotnet_ecommerce1.Repository.IRepository
@@ -11,10 +13,10 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
         {
             _connect = connect;
         }
-        public async Task<List<VariantDTO>> getValueVariant(int id)
+        public async Task<List<VariantFilterDTO>> GetValueVariant(int id)
         {
             var data = await _connect.Database
-        .SqlQueryRaw<VariantDTO>(@"
+        .SqlQueryRaw<VariantFilterDTO>(@"
     SELECT 
                 key, 
                 array_agg(DISTINCT value ORDER BY value) AS values
@@ -49,6 +51,28 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
         .ToListAsync();
 
             return data;
+        }
+        public async Task<List<Variant>> GetVariantByFilter(FilterDTO dTO)
+        {
+            var sql = "select * from variant where";
+            var conditions = new List<string>();
+            if (dTO.Filter != null)
+            {
+                foreach (var item in dTO.Filter)
+                {
+                    var key = item.Key;
+                    var value = item.Value;
+                    if (value != null)
+                    {
+                        var values = string.Join(",", value.Select(v => $"'{v}'"));
+                        conditions.Add($"variant ->> '{key}' IN ({values})");
+                    }
+                }
+            }
+            if (conditions.Count > 0)
+                sql += string.Join("AND", conditions);
+            var result = await _connect.variants.FromSqlRaw(sql).ToListAsync();
+            return result;
         }
 
     }

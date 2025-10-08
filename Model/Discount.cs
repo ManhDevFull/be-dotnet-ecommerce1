@@ -13,5 +13,6 @@ namespace dotnet.Model
     public DateTime starttime { get; set; }
     public DateTime endtime { get; set; }
     public DateTime? createtime { get; set; }
+    public List<DiscountProduct>? discountProducts { get; set; }
   }
 }

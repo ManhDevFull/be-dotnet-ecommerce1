@@ -19,10 +19,10 @@ namespace be_dotnet_ecommerce1.Controllers
             return Ok(quantity);
         }
         [HttpPost("filter")]
-        public IActionResult FilterProducts(FilterDTO dTO)
+        public IActionResult FilterProducts([FromBody] FilterDTO dTO)
         {
-            return Ok();
+            var result = _service.getProductByFilter(dTO);
+            return Ok(result);
         }
-        // size: [l, m ,x]
     }
 }

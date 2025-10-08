@@ -257,7 +257,85 @@ cells:
 
       \            GROUP BY key\r
 
-      \            ORDER BY key;\", id, id)"
+      \            ORDER BY key;\", id, id)\"\r
+
+      \r
+
+      -------------------------------------------\r
+
+      \    SELECT \r
+
+      \    STRING_AGG(\r
+
+      \        CONCAT(\r
+
+      \            '{',\r
+
+      \            '\"id\":', v.id, ',',\r
+
+      \            '\"valuevariant\":', to_jsonb(v.valuevariant), ',',\r
+
+      \            '\"stock\":', v.stock, ',',\r
+
+      \            '\"inputprice\":', v.inputprice, ',',\r
+
+      \            '\"price\":', v.price, ',',\r
+
+      \            '\"createdate\":\"', to_char(v.createdate, 'YYYY-MM-DD
+      HH24:MI:SS'), '\",',\r
+
+      \            '\"updatedate\":\"', to_char(v.updatedate, 'YYYY-MM-DD
+      HH24:MI:SS'), '\"',\r
+
+      \            '}'\r
+
+      \        ), ','\r
+
+      \    ) AS variantJson\r
+
+      FROM variant v\r
+
+      WHERE v.product_id = 1;\r
+
+      \r\n"
+    metadata: {}
+  - kind: 2
+    languageId: sql
+    value: "-------------------------------------------\r
+
+      \    SELECT \r
+
+      \    STRING_AGG(\r
+
+      \        CONCAT(\r
+
+      \            '{',\r
+
+      \            '\"id\":', v.id, ',',\r
+
+      \            '\"valuevariant\":', to_jsonb(v.valuevariant), ',',\r
+
+      \            '\"stock\":', v.stock, ',',\r
+
+      \            '\"inputprice\":', v.inputprice, ',',\r
+
+      \            '\"price\":', v.price, ',',\r
+
+      \            '\"createdate\":\"', to_char(v.createdate, 'YYYY-MM-DD
+      HH24:MI:SS'), '\",',\r
+
+      \            '\"updatedate\":\"', to_char(v.updatedate, 'YYYY-MM-DD
+      HH24:MI:SS'), '\"',\r
+
+      \            '}'\r
+
+      \        ), ','\r
+
+      \    ) AS variantJson\r
+
+      FROM variant v\r
+
+      WHERE v.product_id = 1;"
     metadata: {}
 metadata:
   conn:

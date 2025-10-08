@@ -10,6 +10,8 @@ namespace dotnet.Model
     public int id { get; set; }
     public int productid { get; set; } //fk
     public Product? Product { get; set; }
+    public List<DiscountProduct>? discountProduct { get; set; }
+    public List<Order>? Orders { get; set; }
     public string valuevariant { get; set; } = null!; // JSONB
     public int stock { get; set; }
     public int inputprice { get; set; }

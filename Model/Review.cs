@@ -15,5 +15,6 @@ namespace dotnet.Model
     public DateTime? createdate { get; set; }
     public DateTime? updatedate { get; set; }
     public bool isupdated { get; set; }
+    public Order? order { get; set; }
   }
 }

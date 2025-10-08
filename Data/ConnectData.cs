@@ -1,3 +1,4 @@
+using System.Runtime.Intrinsics.Arm;
 using be_dotnet_ecommerce1.Model;
 using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,10 @@ namespace be_dotnet_ecommerce1.Data
     public DbSet<Account> accounts { get; set; }
     public DbSet<Product> products { get; set; }
     public DbSet<Variant> variants { get; set; }
-
+    public DbSet<Discount> discounts { get; set; }
+    public DbSet<Order> orders { get; set; }
+    public DbSet<DiscountProduct> discountProducts { get; set; }
+    public DbSet<Review> reviews { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       modelBuilder.Entity<Category>(entity =>
@@ -24,7 +28,7 @@ namespace be_dotnet_ecommerce1.Data
         entity.Property(e => e.id).HasColumnName("id");
         entity.Property(e => e.namecategory).HasColumnName("namecategory");
         entity.Property(e => e.idparent).HasColumnName("parent_id");
-        entity.HasMany(c => c.Products).WithOne(p => p.Category).HasForeignKey(p => p.category);
+        entity.HasMany(c => c.Products).WithOne(p => p.Category).HasForeignKey(p => p.categoryId);
       });
       modelBuilder.Entity<Account>(entity =>
         {
@@ -50,7 +54,7 @@ namespace be_dotnet_ecommerce1.Data
                  entity.Property(e => e.nameproduct).HasColumnName("nameproduct");
                  entity.Property(e => e.brand).HasColumnName("brand");
                  entity.Property(e => e.description).HasColumnName("description");
-                 entity.Property(e => e.category).HasColumnName("category"); 
+                 entity.Property(e => e.categoryId).HasColumnName("category");
                  entity.Property(e => e.imageurls)
                     .HasColumnName("imageurls")
                     .HasColumnType("text[]");
@@ -62,6 +66,7 @@ namespace be_dotnet_ecommerce1.Data
                  // .HasForeignKey(p => p.category)
                  // .HasConstraintName("fk_product_category");
                });
+      //variant
       modelBuilder.Entity<Variant>(entity =>
       {
         entity.ToTable("variant");
@@ -72,17 +77,51 @@ namespace be_dotnet_ecommerce1.Data
         entity.Property(e => e.stock).HasColumnName("stock");
         entity.Property(e => e.inputprice).HasColumnName("inputprice");
         entity.HasOne(v => v.Product).WithMany(p => p.Variants).HasForeignKey("product_id");
+        entity.HasMany(v => v.discountProduct).WithOne(dp => dp.variant).HasForeignKey("_idVariant");
+        entity.HasMany(v => v.Orders).WithOne(o => o.variant).HasForeignKey("variant_id");
       });
+      //category admin
       modelBuilder.Entity<CategoryAdmin>(entity =>
-{
-  entity.HasNoKey();
-  entity.ToView(null);
-  entity.Property(e => e.id).HasColumnName("id");
-  entity.Property(e => e.namecategory).HasColumnName("namecategory");
-  entity.Property(e => e.idparent).HasColumnName("idparent");
-  entity.Property(e => e.product).HasColumnName("product");
-});
+      {
+        entity.HasNoKey();
+        entity.ToView(null);
+        entity.Property(e => e.id).HasColumnName("id");
+        entity.Property(e => e.namecategory).HasColumnName("namecategory");
+        entity.Property(e => e.idparent).HasColumnName("idparent");
+        entity.Property(e => e.product).HasColumnName("product");
+      });
+      // discount
+      modelBuilder.Entity<Discount>(entity =>
+      {
+        entity.ToTable("discount");
+        entity.HasKey(e => e.id);
+        entity.Property(e => e.typediscount).HasColumnName("typediscount");
+      });
+      //discountProduct
+      modelBuilder.Entity<DiscountProduct>(entity =>
+      {
+        entity.ToTable("discount_product");
+        entity.HasKey("id");
+        entity.Property(e => e.discountid).HasColumnName("discount_id");
+        entity.Property(e => e.variantid).HasColumnName("variant_id");
+        entity.HasOne(dp => dp.discount).WithMany(d => d.discountProducts).HasForeignKey("discount_id");
+        entity.HasOne(dp => dp.variant).WithMany(v => v.discountProduct).HasForeignKey("variant_id");
+      });
+      //order
+      modelBuilder.Entity<Order>(entity =>
+      {
+        entity.HasKey("id");
+        entity.Property(e => e.accountid).HasColumnName("account_id");
+        entity.Property(e => e.variantid).HasColumnName("variant_id");
+        entity.Property(e => e.addressid).HasColumnName("address_id");
+        entity.HasOne(o => o.review).WithOne(r => r.order).HasForeignKey<Review>("order_id");
+      });
+      // review
+      modelBuilder.Entity<Review>(entity =>
+      {
+        entity.HasKey("id");
+        entity.Property(e => e.orderid).HasColumnName("order_id");
+      });
     }
-
   }
 }
