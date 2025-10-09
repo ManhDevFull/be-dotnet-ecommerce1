@@ -1,6 +1,7 @@
 using System.Reflection.Emit;
 using be_dotnet_ecommerce1.Model;
 using dotnet.Dtos;
+using dotnet.Dtos.admin;
 using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,8 @@ namespace be_dotnet_ecommerce1.Data
     public DbSet<UserDTO> users { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+      modelBuilder.Entity<ProductAdminRow>().HasNoKey().ToView(null);
+
       modelBuilder.Entity<Category>(entity =>
       {
         entity.ToTable("category");
