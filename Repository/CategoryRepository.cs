@@ -21,27 +21,26 @@ namespace be_dotnet_ecommerce1.Repository
     {
       var sql = @"
                 WITH RECURSIVE descendants AS (
-                  SELECT id AS root_id, id
-                  FROM category
-                  UNION ALL
-                  SELECT d.root_id, c.id
-                  FROM category c
-                  JOIN descendants d ON c.parent_id = d.id
-                )
-                SELECT
-                  cat.id,
-                  cat.namecategory,
-                  cat.parent_id AS idparent,
-                  COUNT(DISTINCT p.id) AS product
-                FROM category cat
-                LEFT JOIN descendants d ON d.root_id = cat.id
-                LEFT JOIN product p ON p.category = d.id
-                GROUP BY cat.id, cat.namecategory, cat.parent_id
-                ORDER BY cat.id;
+                SELECT id AS root_id, id
+                FROM category
+                UNION ALL
+                SELECT d.root_id, c.id
+                FROM category c
+                JOIN descendants d ON c.parent_id = d.id
+              )
+              SELECT
+                cat.id,
+                cat.namecategory,
+                cat.parent_id AS idparent,
+                COUNT(DISTINCT p.id) AS product
+              FROM category cat
+              LEFT JOIN descendants d ON d.root_id = cat.id
+              LEFT JOIN product p ON p.category = d.id
+              GROUP BY cat.id, cat.namecategory, cat.parent_id
+              ORDER BY cat.id
             ";
 
-      var list = _connect.Set<CategoryAdmin>().FromSqlRaw(sql).ToList();
-      return list;
+      return _connect.categoryAdmins.FromSqlRaw(sql).AsNoTracking().ToList();
     }
   }
 }

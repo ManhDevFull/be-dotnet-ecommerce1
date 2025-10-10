@@ -43,7 +43,7 @@ namespace dotnet.Controllers
     {
       try
       {
-        var user = await _db.Set<Account>().FirstOrDefaultAsync(u => u.email == dto.Email);
+        var user = await _db.accounts.FirstOrDefaultAsync(u => u.email == dto.Email);
         if (user == null)
           return Unauthorized(new { message = "Email not found" });
 
@@ -85,7 +85,7 @@ namespace dotnet.Controllers
           data = new
           {
             accessToken,
-            user = new { id = user.id, name = $"{user.firstname} {user.lastname}", email = user.email, avatarUrl = user.avatarimg, rule = user.role }
+            user = new { id = user.id, name = $"{user.firstname} {user.lastname}", email = dto.Email, avatarUrl = user.avatarimg, rule = user.role }
           }
         });
       }
@@ -103,7 +103,7 @@ namespace dotnet.Controllers
         var cookieRt = Request.Cookies["refreshToken"];
         if (!string.IsNullOrEmpty(cookieRt))
         {
-          var user = await _db.Set<Account>().FirstOrDefaultAsync(u => u.refreshtoken == cookieRt);
+          var user = await _db.accounts.FirstOrDefaultAsync(u => u.refreshtoken == cookieRt);
           if (user != null)
           {
             user.refreshtoken = null;
@@ -151,7 +151,7 @@ namespace dotnet.Controllers
         // string rule;
 
         // NEW: EF Core
-        var user = await _db.Set<Account>().FirstOrDefaultAsync(u => u.email == email);
+        var user = await _db.accounts.FirstOrDefaultAsync(u => u.email == email);
         if (user == null)
         {
           var parts = (name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -218,7 +218,7 @@ namespace dotnet.Controllers
         // cmd.Parameters.AddWithValue("rt", refreshTokenToCheck);
 
         // NEW: EF Core
-        var user = await _db.Set<Account>().FirstOrDefaultAsync(u => u.refreshtoken == refreshTokenToCheck);
+        var user = await _db.accounts.FirstOrDefaultAsync(u => u.refreshtoken == refreshTokenToCheck);
         if (user == null || user.refreshtokenexpires < DateTime.UtcNow)
           return Unauthorized(new { message = "Invalid or expired refresh token" });
 

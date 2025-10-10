@@ -1,12 +1,12 @@
-using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 namespace be_dotnet_ecommerce1.Model
 {
+  [Keyless]
   public class CategoryAdmin
   {
-    [Key]
     public int id { get; set; }
     public string namecategory { get; set; } = null!;
     public int? idparent { get; set; }
-    public int? product { get; set; }
+    public long? product { get; set; }
   }
 }

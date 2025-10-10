@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace dotnet.Model
 {
   public class Review
@@ -15,5 +10,6 @@ namespace dotnet.Model
     public DateTime? createdate { get; set; }
     public DateTime? updatedate { get; set; }
     public bool isupdated { get; set; }
+    public Order? order { get; set; }
   }
 }

@@ -1,12 +1,16 @@
+
 using dotnet.Dtos;
 using dotnet.Repository.IRepository;
-using dotnet.Service.IService;
+using be_dotnet_ecommerce1.Controllers;
+using be_dotnet_ecommerce1.Dtos;
+using be_dotnet_ecommerce1.Service.IService;
+using be.Service.IService;
 
 namespace dotnet.Service
 {
   public class ProductService : IProductService
   {
-     private readonly IProductReponsitory _repo;
+    private readonly IProductReponsitory _repo;
     public ProductService(IProductReponsitory repo)
     {
       _repo = repo;
@@ -16,5 +20,19 @@ namespace dotnet.Service
       var list = _repo.getProductAdmin(page, size);
       return list;
     }
+
+    public async Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
+    {
+      var result = await _repo.getProductByFilter(dTO);
+      return result;
+    }
+
+
+    public int getQuantityByIdCategory(int id)
+    {
+      var quantity = _repo.getQuantityByIdCategory(id);
+      return quantity;
+    }
   }
 }
+

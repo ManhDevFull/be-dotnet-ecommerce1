@@ -1,20 +1,91 @@
 // File: Repository/ProductReponsitory.cs
 using System.Text.Json;
+using be_dotnet_ecommerce1.Controllers;
 using be_dotnet_ecommerce1.Data;
+using be_dotnet_ecommerce1.Dtos;
+using be_dotnet_ecommerce1.Repository;
+using be_dotnet_ecommerce1.Repository.IRepository;
 using dotnet.Dtos;
 using dotnet.Dtos.admin;
+using dotnet.Model;
 using dotnet.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
 
 namespace dotnet.Repository
 {
-  public class ProductReponsitory : IProductReponsitory
-  {
+  public class ProductReponsitory : IProductReponsitory  {
     private readonly ConnectData _connect;
+    private VariantRepository variantRepository;
     public ProductReponsitory(ConnectData connect)
     {
       _connect = connect;
+      variantRepository = new VariantRepository(_connect);
     }
+
+    public async Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
+    {
+      try
+      {
+
+        var variants = await variantRepository.GetVariantByFilter(dTO) ?? new List<Variant>();
+        var producids = variants.Select(v => v.productid).Distinct().ToList();
+
+        var products = await _connect.products
+            .Include(p => p.category)
+            .Where(p => producids.Contains(p.id))
+            .Select(p => new ProductFilterDTO
+            {
+              id = p.id,
+              name = p.nameproduct,
+              description = p.description,
+              brand = p.brand,
+              categoryId = p.categoryId,
+              categoryName = p.category != null ? p.category.namecategory : null,
+              imgUrls = p.imageurls,
+              variant = _connect.variants
+                    .Where(v => v.productid == p.id)
+                    .Select(v => new VariantDTO
+                    {
+                      id = v.id,
+                      valuevariant = v.valuevariant,
+                      stock = v.stock,
+                      inputprice = v.inputprice,
+                      price = v.price,
+                      createdate = v.createdate,
+                      updatedate = v.updatedate
+                    }).ToArray(),
+              discount = (from dp in _connect.discountProducts
+                          join d in _connect.discounts on dp.discountid equals d.id
+                          join v in _connect.variants on dp.variantid equals v.id
+                          where v.productid == p.id
+                          select d).ToArray(),
+              rating = (from r in _connect.reviews
+                        join o in _connect.orders on r.orderid equals o.id
+                        join v in _connect.variants on o.variantid equals v.id
+                        where (v.productid == p.id)
+                        select (int?)r.rating).Sum() ?? 0,
+              order = (from o in _connect.orders
+                       join v in _connect.variants on o.variantid equals v.id
+                       where v.productid == p.id
+                       select o).Count()
+            }).ToListAsync();
+        return products;
+      }
+      catch (Exception ex)
+      {
+        Console.Write(ex);
+        throw;
+      }
+
+    }
+
+
+    public int getQuantityByIdCategory(int id)
+    {
+      var quantity = _connect.products.Count(p => p.categoryId == id);
+      return quantity;
+    }
+
 
     public List<ProductDTO> getProductAdmin(int page, int size)
     {
@@ -60,7 +131,6 @@ namespace dotnet.Repository
         LIMIT {0} OFFSET {1};
       ";
 
-      // ❌ KHÔNG dùng Set<ProductDTO>()
       var rows = _connect.Set<ProductAdminRow>()
                          .FromSqlRaw(sql, size, offset)
                          .AsNoTracking()

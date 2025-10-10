@@ -1,3 +1,5 @@
+using dotnet.Model;
+
 namespace be_dotnet_ecommerce1.Model
 {
   public class Account
@@ -15,6 +17,9 @@ namespace be_dotnet_ecommerce1.Model
     public bool? isdeleted { get; set; }
     public string? refreshtoken { get; set; }
     public DateTime? refreshtokenexpires { get; set; }
-
+    public List<Address>? addresses { get; set; }
+    public List<Order>? orders { get; set; }
+    public List<WishList>? wishlists { get; set; }
+    public List<ShoppingCart>? carts { get; set; }
   }
 }

@@ -14,6 +14,9 @@ using dotnet.Service.IService;
 using dotnet.Service;
 using dotnet.Repository.IRepository;
 using dotnet.Repository;
+using be_dotnet_ecommerce1.Service;
+using be_dotnet_ecommerce1.Repository.IRepository;
+using be.Service.IService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,7 +35,11 @@ builder.Services.AddScoped<IUserReponsitory, UserReponsitory>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IAddressReponsitory, AddressReponsitory>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IVariantRepository, VariantRepository>();
+builder.Services.AddScoped<IVariantService, VariantService>();
 builder.Services.AddScoped<IProductReponsitory, ProductReponsitory>();
+
+
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 // CORS

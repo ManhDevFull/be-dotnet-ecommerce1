@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using be_dotnet_ecommerce1.Model;
 
 namespace dotnet.Model
 {
@@ -17,5 +18,9 @@ namespace dotnet.Model
     public DateTime? receivedate { get; set; }
     public string? typepay { get; set; }
     public string? statuspay { get; set; }
+    public Account? account { get; set; }
+    public Variant? variant { get; set; }
+    public Address? address { get; set; }
+    public Review? review { get; set; }
   }
 }

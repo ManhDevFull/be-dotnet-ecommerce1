@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 namespace dotnet.Dtos
 {
+  [Keyless]
   public class UserDTO
   {
     public int id { get; set; } 
