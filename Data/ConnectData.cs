@@ -76,7 +76,7 @@ namespace be_dotnet_ecommerce1.Data
         entity.Property(e => e.valuevariant).HasColumnName("valuevariant").HasColumnType("JSONB");
         entity.Property(e => e.stock).HasColumnName("stock");
         entity.Property(e => e.inputprice).HasColumnName("inputprice");
-        entity.HasOne(v => v.Product).WithMany(p => p.Variants).HasForeignKey("product_id");
+        entity.HasOne(v => v.Product).WithMany(p => p.Variants).HasForeignKey(v=>v.productid);
         entity.HasMany(v => v.discountProduct).WithOne(dp => dp.variant).HasForeignKey("_idVariant");
         entity.HasMany(v => v.Orders).WithOne(o => o.variant).HasForeignKey("variant_id");
       });

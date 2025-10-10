@@ -20,6 +20,14 @@ namespace be_dotnet_ecommerce1.Repository
             variantRepository = new VariantRepository(_connect);
         }
 
+        public async Task<List<Product>> excuteQuery(string sql)
+        {
+            var result = await _connect.products
+                            .FromSqlRaw(sql)
+                            .ToListAsync();
+            return result;
+        }
+
         // public async Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
         // {
         //     var variants = await variantRepository.GetVariantByFilter(dTO);
@@ -81,17 +89,19 @@ namespace be_dotnet_ecommerce1.Repository
         //     }).ToListAsync();
         //     return products;
         // }
+
         public async Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
         {
             try
             {
 
-                var variants = await variantRepository.GetVariantByFilter(dTO) ?? new List<Variant>();
+                var variants = await variantRepository.GetVariantByFilter(dTO) ?? new List<Variant>();// dữ liệu ngoài database
                 var producids = variants.Select(v => v.productid).Distinct().ToList();
-
-                var products = await _connect.products
+                var productRaw = await _connect.products //client side
                     .Include(p => p.Category)
                     .Where(p => producids.Contains(p.id))
+                    .ToListAsync();// nếu không toListAsync thì EF core không dịch được. varaints khai báo ngoài nên không ánh xạ được
+                var products = productRaw
                     .Select(p => new ProductFilterDTO
                     {
                         id = p.id,
@@ -101,7 +111,7 @@ namespace be_dotnet_ecommerce1.Repository
                         categoryId = p.categoryId,
                         categoryName = p.Category != null ? p.Category.namecategory : null,
                         imgUrls = p.imageurls,
-                        variant = _connect.variants
+                        variant = variants
                             .Where(v => v.productid == p.id)
                             .Select(v => new VariantDTO
                             {
@@ -117,7 +127,7 @@ namespace be_dotnet_ecommerce1.Repository
                                     join d in _connect.discounts on dp.discountid equals d.id
                                     join v in _connect.variants on dp.variantid equals v.id
                                     where v.productid == p.id
-                                    select d).ToArray(),
+                                    select d).Distinct().ToArray(),
                         rating = (from r in _connect.reviews
                                   join o in _connect.orders on r.orderid equals o.id
                                   join v in _connect.variants on o.variantid equals v.id
@@ -127,7 +137,7 @@ namespace be_dotnet_ecommerce1.Repository
                                  join v in _connect.variants on o.variantid equals v.id
                                  where v.productid == p.id
                                  select o).Count()
-                    }).ToListAsync();
+                    }).ToList();
                 return products;
             }
             catch (Exception ex)
@@ -137,6 +147,7 @@ namespace be_dotnet_ecommerce1.Repository
             }
 
         }
+
 
 
         public int getQuantityByIdCategory(int id)

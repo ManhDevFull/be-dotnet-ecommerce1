@@ -32,9 +32,9 @@ namespace be_dotnet_ecommerce1.Repository
 
     //   return list;
     // }
-   public List<CategoryAdmin> getCategoryAdmin()
-        {
-            var sql = @"
+    public List<CategoryAdmin> getCategoryAdmin()
+    {
+      var sql = @"
                 WITH RECURSIVE descendants AS (
                   SELECT id AS root_id, id
                   FROM category
@@ -55,8 +55,14 @@ namespace be_dotnet_ecommerce1.Repository
                 ORDER BY cat.id;
             ";
 
-            var list = _connect.Set<CategoryAdmin>().FromSqlRaw(sql).ToList();
-            return list;
-        }
+      var list = _connect.Set<CategoryAdmin>().FromSqlRaw(sql).ToList();
+      return list;
+    }
+
+    public async Task<List<Category>> getAllCategory()
+    {
+      var result = await _connect.categories.ToListAsync();
+      return result;
+    }
   }
 }

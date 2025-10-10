@@ -7,7 +7,7 @@ namespace be_dotnet_ecommerce1.Controllers
     [Route("[controller]")]
     public class ProductController : ControllerBase
     {
-        private IProductService _service;
+        private readonly IProductService _service;
         public ProductController(IProductService service)
         {
             _service = service;

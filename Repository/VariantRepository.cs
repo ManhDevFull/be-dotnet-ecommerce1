@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using be_dotnet_ecommerce1.Controllers;
 using be_dotnet_ecommerce1.Data;
 using be_dotnet_ecommerce1.Dtos;
@@ -17,7 +18,7 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
         {
             var data = await _connect.Database
         .SqlQueryRaw<VariantFilterDTO>(@"
-    SELECT 
+        SELECT 
                 key, 
                 array_agg(DISTINCT value ORDER BY value) AS values
             FROM (
@@ -29,9 +30,9 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
                 JOIN product ON category.id = product.category
                 JOIN variant ON product.id = variant.product_id
                 CROSS JOIN LATERAL jsonb_each_text(variant.valuevariant) AS kv(key, value)
-                WHERE category.id = {0} 
-                AND variant.isdeleted = false
-                AND product.isdeleted = false
+                --WHERE category.id = 1
+                --AND variant.isdeleted = false
+                --AND product.isdeleted = false
                 
                 UNION ALL
                 
@@ -42,12 +43,28 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
                 FROM category c
                 JOIN product p ON c.id = p.category
                 JOIN variant v ON p.id = v.product_id
-                WHERE c.id = {0}
+                --WHERE c.id = 1
                 AND v.isdeleted = false
                 AND p.isdeleted = false
+
+
+                union all
+                --- Thêm thương hiệu
+                SELECT
+                'brand' as Key,
+                p.brand::text As value
+                from product p
+
+                union all
+                -- thêm danh mục
+                SELECT
+                    'category' as key,
+                    c.namecategory::text as value
+                from category c
             ) AS combined
             GROUP BY key
-            ORDER BY key;", id, id)
+            ORDER BY key;
+        ")
         .ToListAsync();
 
             return data;
@@ -56,19 +73,37 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
         {
             var sql = "select * from variant";
             var conditions = new List<string>();
+            var conditionsProduct = new Dictionary<string, List<string>>();
+            var conditionsVariant = new Dictionary<string, List<string>>();
+
             if (dTO.Filter != null)
             {
                 foreach (var item in dTO.Filter)
                 {
                     var key = item.Key;
-                    var value = item.Value;
-                    if (value != null)
-                    {
-                        var values = string.Join(",", value.Select(v => $"'{v}'"));
-                        conditions.Add($"valuevariant ->> '{key}' IN ({values})");
-                    }
+                    var value = item.Value.ToList();
+                    if (key == "brand" || key == "namecategory")
+                        conditionsProduct[key] = value;
+                    else
+                        conditionsVariant[key] = value;
                 }
             }
+
+
+            // if (dTO.Filter != null)
+            // {
+            //     foreach (var item in dTO.Filter)
+            //     {
+            //         var key = item.Key;
+            //         var value = item.Value;
+            //         if (value != null)
+            //         {
+            //             var values = string.Join(",", value.Select(v => $"'{v}'"));
+            //             //conditions.Add($"valuevariant ->> '{key}' IN ({values})");
+            //             conditions.Add($"valuevariant ->> '{key}' IN ({values})");
+            //         }
+            //     }
+            // }
             if (conditions.Count > 0)
             {
                 sql += " where " + string.Join(" AND ", conditions);
@@ -78,5 +113,13 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
             return result;
         }
 
+        public async Task<Variant[]> GetVariantByIdProduct(int id)
+        {
+            var result = await _connect.variants
+                .Include(p => p.Product)
+                .Where(p => p.Product != null && p.Product.id == id)
+                .ToArrayAsync();
+            return result;
+        }
     }
 }

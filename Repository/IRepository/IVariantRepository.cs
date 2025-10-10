@@ -8,5 +8,6 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
     {
         public Task<List<VariantFilterDTO>> GetValueVariant(int id);
         public Task<List<Variant>> GetVariantByFilter(FilterDTO dTO);
+        public Task<Variant[]> GetVariantByIdProduct(int id);
     }
 }
