@@ -541,7 +541,30 @@ cells:
 
       \r
 
-      \r\n"
+      select DISTINCT * from product p join variant ON (p.id =
+      variant.product_id)\r
+
+      WHERE variant.price between 25000 and 30000\r
+
+      \r
+
+      \r
+
+      \r
+
+      SELECT\r
+
+      \    v.product_id,\r
+
+      \    v.valuevariant ->> 'price' AS price_value\r
+
+      FROM\r
+
+      \    variant v\r
+
+      WHERE\r
+
+      \    v.valuevariant ? 'price';\r\n"
     metadata: {}
 metadata:
   conn:

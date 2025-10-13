@@ -43,13 +43,25 @@ namespace be_dotnet_ecommerce1.Service
                 foreach (var item in dTO.Filter)
                 {
                     var key = item.Key;
-                    var values = string.Join(",", item.Value.Select(v => $"'{v}'"));
-                    if (key == "brand")
-                        conditions.Add($"p.brand IN ({values})");
-                    else if (key == "category")
-                        conditions.Add($"c.nameCategory IN ({values})");
+                    if (key == "price")
+                    {
+                        if (item.Value.Count() == 2)
+                        {
+                            var min = item.Value[0];
+                            var max = item.Value[1];
+                            conditions.Add($"v.price BETWEEN {min} AND {max}");
+                        }
+                    }
                     else
-                        conditions.Add($"v.valuevariant ->> '{key}' IN ({values})");
+                    {
+                        var values = string.Join(",", item.Value.Select(v => $"'{v}'"));
+                        if (key == "brand")
+                            conditions.Add($"p.brand IN ({values})");
+                        else if (key == "category")
+                            conditions.Add($"c.nameCategory IN ({values})");
+                        else
+                            conditions.Add($"v.valuevariant ->> '{key}' IN ({values})");
+                    }
                 }
             }
             if (conditions.Any())
