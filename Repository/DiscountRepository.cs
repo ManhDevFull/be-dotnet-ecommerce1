@@ -12,7 +12,7 @@ namespace be_dotnet_ecommerce1.Repository
         {
             _connect = connect;
         }
-        public async Task<Discount> getDiscountByIdProduct(int id)
+        public async Task<Discount?> getDiscountByIdProduct(int id) // lấy giảm giá theo mã sản phẩm
         {
             var result = await (from p in _connect.products
                                 where p.id == id
@@ -23,8 +23,10 @@ namespace be_dotnet_ecommerce1.Repository
 
                                 join d in _connect.discounts on dp.discountid equals d.id into dj //nối bảng discount
                                 from d in dj.DefaultIfEmpty()
-                               )
-                               return 
+
+                                select d
+                               ).FirstOrDefaultAsync();
+            return result;
         }
 
     }

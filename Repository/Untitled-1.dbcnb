@@ -492,6 +492,53 @@ cells:
 
       \r
 
+      SELECT COUNT(*) \r
+
+      FROM orders o\r
+
+      JOIN variant v ON o.variant_id = v.id\r
+
+      WHERE v.product_id = 1;\r
+
+      \r
+
+      \r
+
+      SELECT  sum(r.rating) from review r\r
+
+      join orders o on (r.order_id = o.id)\r
+
+      join variant v on (v.id = o.variant_id)\r
+
+      WHERE (v.product_id = 1)\r
+
+      \r
+
+      \r
+
+      \r
+
+      select * from review\r
+
+      select * from orders\r
+
+      select * from  variant WHERE product_id = 1\r
+
+      \r
+
+      \r
+
+      SELECT  r.id as idreview, o.id as idorder, \r
+
+      v.product_id as idproduct, r.rating, v.id as idvariant, v.product_id as
+      idporduct from review r\r
+
+      join orders o on (r.order_id = o.id)\r
+
+      join variant v on (v.id = o.variant_id)\r
+
+      WHERE (v.product_id = 2)\r
+
       \r
 
       \r\n"

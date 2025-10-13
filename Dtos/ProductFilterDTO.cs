@@ -14,7 +14,7 @@ namespace be_dotnet_ecommerce1.Dtos
         //public int totalStock { get; set; }
         public VariantDTO[]? variant { get; set; }
         //public DateTime updateDate { get; set; }
-        public Discount[]? discount { get; set; } 
+        public Discount? discount { get; set; } 
         public int rating { get; set; }
         public int order { get; set; }
     }

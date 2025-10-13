@@ -12,17 +12,21 @@ namespace be_dotnet_ecommerce1.Service
         private readonly IProductRepository _repoProduct;
         private readonly IVariantRepository _repoVariant;
         private readonly ICategoryRepository _repoCategory;
+        private readonly IReviewRepository _repoReview;
+        private readonly IDiscountRepository _repoDiscount;
 
-        // public ProductService(IProductRepository repoProduct)
-        // {
-        //     _repoProduct = repoProduct;
-        // }
-
-        public ProductService(IProductRepository repoProduct, IVariantRepository repoVariant, ICategoryRepository repoCategory)
+        public ProductService(IProductRepository repoProduct,
+            IVariantRepository repoVariant,
+            ICategoryRepository repoCategory,
+            IReviewRepository repoReview,
+            IDiscountRepository repoDiscount
+        )
         {
             _repoProduct = repoProduct;
             _repoVariant = repoVariant;
             _repoCategory = repoCategory;
+            _repoReview = repoReview;
+            _repoDiscount = repoDiscount;
         }
 
         public async Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
@@ -51,7 +55,7 @@ namespace be_dotnet_ecommerce1.Service
             if (conditions.Any())
                 sql += " Where " + string.Join(" AND ", conditions);
 
-            var productRaw = await _repoProduct.excuteQuery(sql);
+            var productRaw = await _repoProduct.getProductBySql(sql);
             var products = new List<ProductFilterDTO>();
             var categories = await _repoCategory.getAllCategory();
             foreach (var p in productRaw)
@@ -81,20 +85,9 @@ namespace be_dotnet_ecommerce1.Service
                         createdate = v.createdate,
                         updatedate = v.updatedate
                     }).ToArray(),
-                    discount = (from dp in _connect.discountProducts
-                                join d in _connect.discounts on dp.discountid equals d.id
-                                join v in _connect.variants on dp.variantid equals v.id
-                                where v.productid == p.id
-                                select d).Distinct().ToArray(),
-                    rating = (from r in _connect.reviews
-                              join o in _connect.orders on r.orderid equals o.id
-                              join v in _connect.variants on o.variantid equals v.id
-                              where (v.productid == p.id)
-                              select (int?)r.rating).Sum() ?? 0,
-                    order = (from o in _connect.orders
-                             join v in _connect.variants on o.variantid equals v.id
-                             where v.productid == p.id
-                             select o).Count()
+                    discount = await _repoDiscount.getDiscountByIdProduct(p.id),
+                    rating = await _repoReview.getSumRatingByIdProduct(p.id),
+                    order = await _repoReview.getSumQuantityReviewByIdProduct(p.id)
                 });
             }
             return products;
