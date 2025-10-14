@@ -564,7 +564,21 @@ cells:
 
       WHERE\r
 
-      \    v.valuevariant ? 'price';\r\n"
+      \    v.valuevariant ? 'price';\r
+
+      \r
+
+      \r
+
+      \r
+
+      select top 10 * FROM product p\r
+
+      join category c ON (p.category = c.id)\r
+
+      join variant v ON (p.id = v.product_id)\r
+
+      JOIN orders o ON (v.id = orders.variant_id)\r\n"
     metadata: {}
 metadata:
   conn:
