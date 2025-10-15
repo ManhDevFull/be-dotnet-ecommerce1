@@ -60,7 +60,7 @@ namespace dotnet.Controllers
                 if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.password))
                     return Unauthorized(new { message = "Invalid password" });
 
-                var accessToken = GenerateJwtToken(user._id.ToString(), user.email, user.rule.ToString());
+                var accessToken = GenerateJwtToken(user.id.ToString(), user.email, user.rule.ToString());
                 var refreshToken = GenerateRefreshToken();
 
                 user.refresh_token = refreshToken;
@@ -83,7 +83,7 @@ namespace dotnet.Controllers
                     data = new
                     {
                         accessToken,
-                        user = new { id = user._id, name = $"{user.first_name} {user.last_name}", email = user.email, avatarUrl = user.avatar_img, rule = user.rule }
+                        user = new { id = user.id, name = $"{user.first_name} {user.last_name}", email = user.email, avatarUrl = user.avatar_img, rule = user.rule }
                     }
                 });
             }
@@ -108,7 +108,6 @@ namespace dotnet.Controllers
                 //     cmd.Parameters.AddWithValue("rt", cookieRt);
                 //     await cmd.ExecuteNonQueryAsync();
                 // }
-
                 // NEW: EF Core
                 if (!string.IsNullOrEmpty(cookieRt))
                 {
@@ -179,7 +178,7 @@ namespace dotnet.Controllers
                     await _db.SaveChangesAsync();
                 }
 
-                var accessToken = GenerateJwtToken(user._id.ToString(), user.email, user.rule.ToString());
+                var accessToken = GenerateJwtToken(user.id.ToString(), user.email, user.rule.ToString());
                 var refreshToken = GenerateRefreshToken();
 
                 user.refresh_token = refreshToken;
@@ -199,7 +198,7 @@ namespace dotnet.Controllers
                 return Ok(new
                 {
                     status = 200,
-                    data = new { accessToken, user = new { id = user._id, name, avatarUrl, email, rule = user.rule } }
+                    data = new { accessToken, user = new { id = user.id, name, avatarUrl, email, rule = user.rule } }
                 });
             }
             catch (Exception ex)
@@ -236,7 +235,7 @@ namespace dotnet.Controllers
                 user.refresh_token_expires = DateTime.UtcNow.AddDays(7);
                 await _db.SaveChangesAsync();
 
-                var newAccessToken = GenerateJwtToken(user._id.ToString(), user.email, user.rule.ToString());
+                var newAccessToken = GenerateJwtToken(user.id.ToString(), user.email, user.rule.ToString());
 
                 var cookieOptions = new CookieOptions
                 {

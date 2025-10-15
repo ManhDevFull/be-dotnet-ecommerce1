@@ -2,7 +2,7 @@ namespace be_dotnet_ecommerce1.Model
 {
     public class Account
     {
-        public int _id { get; set; }              // Khóa chính (PK)
+        public int id { get; set; }              // Khóa chính (PK)
 
         public string email { get; set; } = null!;
 

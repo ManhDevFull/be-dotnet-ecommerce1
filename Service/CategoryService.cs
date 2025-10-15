@@ -18,6 +18,5 @@ namespace be_dotnet_ecommerce1.Service.IService
             }).ToList();
             return list;
         }
-
     }
 }
