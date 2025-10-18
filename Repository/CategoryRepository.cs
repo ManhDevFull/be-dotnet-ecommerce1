@@ -17,7 +17,7 @@ namespace be_dotnet_ecommerce1.Repository
     {
       return _connect.categories.Where(c => c.idparent == id).ToList();
     }
-    public List<CategoryAdmin> getCategoryAdmin()
+    public List<CategoryAdminDTO> getCategoryAdmin()
     {
       var sql = @"
                 WITH RECURSIVE descendants AS (

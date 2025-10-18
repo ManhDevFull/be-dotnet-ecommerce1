@@ -6,14 +6,15 @@ using be_dotnet_ecommerce1.Dtos;
 using be_dotnet_ecommerce1.Repository;
 using be_dotnet_ecommerce1.Repository.IRepository;
 using dotnet.Dtos;
-using dotnet.Dtos.admin;
 using dotnet.Model;
 using dotnet.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
+using dotnet.Dtos.admin;
 
 namespace dotnet.Repository
 {
-  public class ProductReponsitory : IProductReponsitory  {
+  public class ProductReponsitory : IProductReponsitory
+  {
     private readonly ConnectData _connect;
     private VariantRepository variantRepository;
     public ProductReponsitory(ConnectData connect)
@@ -87,85 +88,72 @@ namespace dotnet.Repository
     }
 
 
-    public List<ProductDTO> getProductAdmin(int page, int size)
+    public async Task<PagedResult<ProductAdminDTO>> getProductAdmin(
+        int page,
+        int size,
+        string? name,
+        int? cate,
+        string? brand,
+        bool? stock,
+        string sort = "newest")
     {
-      if (page < 1) page = 1;
-      if (size <= 0) size = 10;
+      page = Math.Max(1, page);
+      size = Math.Clamp(size, 1, 100);
       var offset = (page - 1) * size;
 
-      var sql = @"
-        WITH product_agg AS (
-          SELECT 
-              p.id AS product_id,
-              p.nameproduct AS product_name,
-              p.description AS product_description,
-              p.brand,
-              p.category AS category_id,
-              c.namecategory AS category_name,
-              p.imageurls,
-              p.createdate AS product_created,
-              p.updatedate AS product_updated,
-              COALESCE(SUM(v.stock), 0) AS total_stock,
-              COALESCE(
-                json_agg(
-                  json_build_object(
-                    'id', v.id,
-                    'value', v.valuevariant,      -- JSON object -> JsonElement
-                    'stock', v.stock,
-                    'inputPrice', v.inputprice,
-                    'price', v.price,
-                    'createDate', v.createdate,
-                    'updateDate', v.updatedate
-                  )
-                ) FILTER (WHERE v.id IS NOT NULL), '[]'
-              )::text AS variants               -- ép ra TEXT để deserialize thủ công
-          FROM product p
-          LEFT JOIN category c ON p.category = c.id
-          LEFT JOIN variant v ON v.product_id = p.id AND v.isdeleted = FALSE
-          WHERE p.isdeleted = FALSE
-          GROUP BY p.id, c.id, p.nameproduct, p.description, p.brand, p.imageurls, p.createdate, p.updatedate
-        )
-        SELECT *
-        FROM product_agg
-        ORDER BY product_id
-        LIMIT {0} OFFSET {1};
-      ";
+      var q = _connect.productAdmins.AsNoTracking().AsQueryable();
 
-      var rows = _connect.Set<ProductAdminRow>()
-                         .FromSqlRaw(sql, size, offset)
-                         .AsNoTracking()
-                         .ToList();
+      // ---- FILTER ----
+      if (!string.IsNullOrWhiteSpace(name))
+        q = q.Where(p => EF.Functions.ILike(p.name!, $"%{name}%")); // ILIKE cho Postgres
 
-      var list = rows.Select(r =>
+      if (cate.HasValue)
+        q = q.Where(p => p.category_id == cate.Value);
+
+      if (!string.IsNullOrWhiteSpace(brand))
+        q = q.Where(p => p.brand == brand);
+
+      // Lọc tồn kho: có/không có biến thể stock > 0
+      if (stock.HasValue)
       {
-        List<ProductDTO.ValueVariant> variants;
-        try
+        if (stock.Value)
         {
-          variants = JsonSerializer.Deserialize<List<ProductDTO.ValueVariant>>(r.variants)
-                     ?? new List<ProductDTO.ValueVariant>();
+          q = from p in q
+              where _connect.variants.Any(v => v.productid == p.product_id && v.stock > 0)
+              select p;
         }
-        catch
+        else
         {
-          variants = new List<ProductDTO.ValueVariant>();
+          q = from p in q
+              where !_connect.variants.Any(v => v.productid == p.product_id && v.stock > 0)
+              select p;
         }
+      }
 
-        return new ProductDTO
-        {
-          product_id = r.product_id,
-          product_name = r.product_name,
-          product_description = r.product_description,
-          brand = r.brand,
-          category_id = r.category_id,
-          category_name = r.category_name,
-          imageurls = r.imageurls,
-          product_created = r.product_created,
-          product_updated = r.product_updated,
-          total_stock = r.total_stock,
-          variants = variants
-        };
-      }).ToList();
+      // ---- SORT ----
+      q = sort switch
+      {
+        "name_asc" => q.OrderBy(p => p.name),
+        "name_desc" => q.OrderByDescending(p => p.name),
+        "price_asc" => q.OrderBy(p => p.min_price ?? int.MaxValue),
+        "price_desc" => q.OrderByDescending(p => p.min_price ?? int.MinValue),
+        "oldest" => q.OrderBy(p => p.createdate ?? DateTime.MinValue),
+        "updated" => q.OrderByDescending(p => p.updatedate ?? p.createdate ?? DateTime.MinValue),
+        _ => q.OrderByDescending(p => p.createdate ?? DateTime.MinValue) // newest
+      };
 
-      return list;
+      // ---- PAGING ----
+      var total = await q.CountAsync();
+      var rows = await q.Skip(offset).Take(size).ToListAsync();
+
+      return new PagedResult<ProductAdminDTO>
+      {
+        Items = rows,
+        Total = total,
+        Page = page,
+        Size = size
+      };
     }
+
   }
 }

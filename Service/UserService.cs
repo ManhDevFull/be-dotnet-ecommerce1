@@ -1,4 +1,4 @@
-using dotnet.Dtos;
+using dotnet.Dtos.admin;
 using dotnet.Repository.IRepository;
 using dotnet.Service.IService;
 
@@ -10,7 +10,7 @@ namespace dotnet.Service
     public UserService(IUserReponsitory repo){
       _repo = repo;
     }
-    public List<UserDTO> getUsers(){
+    public List<UserAdminDTO> getUsers(){
       var list = _repo.getUserAdmin();
       return list;
     }

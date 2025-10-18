@@ -23,8 +23,11 @@ namespace be_dotnet_ecommerce1.Data
     public DbSet<ShoppingCart> shoppingCarts { get; set; }
     public DbSet<Variant> variants { get; set; }
     public DbSet<WishList> wishLists { get; set; }
-    public DbSet<CategoryAdmin> categoryAdmins { get; set; }
-    public DbSet<UserDTO> userDTOAdmins { get; set; }
+
+    // DTO
+    public DbSet<CategoryAdminDTO> categoryAdmins { get; set; }
+    public DbSet<UserAdminDTO> userAdmins { get; set; }
+    public DbSet<ProductAdminDTO> productAdmins { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       //account
@@ -202,9 +205,13 @@ namespace be_dotnet_ecommerce1.Data
         entity.HasOne(wl => wl.account).WithMany(a => a.wishlists).HasForeignKey(wl => wl.accountid).OnDelete(DeleteBehavior.Restrict);
       });
 
+      //Admin - DTO
+      modelBuilder.Entity<CategoryAdminDTO>().HasNoKey().ToView(null);
+      modelBuilder.Entity<UserAdminDTO>().HasNoKey().ToView(null);
+     modelBuilder.Entity<ProductAdminDTO>().HasNoKey().ToView("v_product_with_variants"); 
 
-      modelBuilder.Entity<CategoryAdmin>().HasNoKey().ToView(null);
-      modelBuilder.Entity<UserDTO>().HasNoKey().ToView(null);
+      //Client - DTO
+      // modelBuilder.Entity<UserDTO>().HasNoKey().ToView(null);
 
       base.OnModelCreating(modelBuilder);
     }

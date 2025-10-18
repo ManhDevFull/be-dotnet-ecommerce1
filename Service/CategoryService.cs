@@ -20,7 +20,7 @@ namespace be_dotnet_ecommerce1.Service.IService
       }).ToList();
       return list;
     }
-    public List<CategoryAdmin> getCategoryAdmin()
+    public List<CategoryAdminDTO> getCategoryAdmin()
     {
       var list = _repo.getCategoryAdmin();
       return list;
