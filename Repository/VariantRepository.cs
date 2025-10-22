@@ -121,5 +121,14 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
                 .ToArrayAsync();
             return result;
         }
+
+        public async Task<Variant[]> getVariantByIdProducts(List<int> ids) // lấy danh sách variant by list product ids
+        {
+            if (ids == null)
+                return new Variant[0];
+            var rs = await _connect.variants.Where(v => ids.Contains(v.productid)).Distinct().ToArrayAsync();
+            return rs;
+        }
+
     }
 }

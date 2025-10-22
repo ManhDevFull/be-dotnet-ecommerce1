@@ -2,7 +2,7 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
 {
     public interface IReviewRepository
     {
-        public Task<int> getSumRatingByIdProduct(int id);
-        public Task<int> getSumQuantityReviewByIdProduct(int id);
+        public Task<Dictionary<int, int >> getSumRatingByIdsProduct(List<int> ids);
+        public Task<Dictionary<int, int>> getSumQuantityReviewByIdProduct(List<int> ids);
     }
 }

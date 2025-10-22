@@ -18,20 +18,7 @@ namespace be_dotnet_ecommerce1.Repository
       return _connect.categories.Where(c => c.idparent == id).ToList();
     }
 
-    // public List<CategoryAdmin> getCategoryAdmin()
-    // {
-    //   var list = (from c in _connect.categories
-    //               join p in _connect.products on c.id equals p.category into productGroup
-    //               select new CategoryAdmin
-    //               {
-    //                 id = c.id,
-    //                 namecategory = c.namecategory,
-    //                 idparent = c.idparent,
-    //                 product = productGroup.Count()
-    //               }).ToList();
 
-    //   return list;
-    // }
     public List<CategoryAdmin> getCategoryAdmin()
     {
       var sql = @"
@@ -62,6 +49,14 @@ namespace be_dotnet_ecommerce1.Repository
     public async Task<List<Category>> getAllCategory()
     {
       var result = await _connect.categories.ToListAsync();
+      return result;
+    }
+
+    public async Task<List<Category>> getCategoryByProductIds(List<int> ids)
+    {
+      if (ids == null)
+        return new List<Category>();
+      var result = await _connect.categories.Where(c => ids.Contains(c.id)).Distinct().ToListAsync();
       return result;
     }
   }

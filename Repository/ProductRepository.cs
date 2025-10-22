@@ -18,6 +18,13 @@ namespace be_dotnet_ecommerce1.Repository
             _connect = connect;
         }
 
+        public async Task<int> countProductBySql(string sql)
+        {
+            var count = await _connect.Database.SqlQueryRaw<int>(sql).SingleAsync();
+            return count;
+        }
+
+
         public async Task<List<Product>> getProductBySql(string sql)
         {
             var result = await _connect.products

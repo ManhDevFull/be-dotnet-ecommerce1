@@ -1,5 +1,6 @@
 using be_dotnet_ecommerce1.Data;
 using be_dotnet_ecommerce1.Repository.IRepository;
+using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace be_dotnet_ecommerce1.Repository
@@ -12,29 +13,43 @@ namespace be_dotnet_ecommerce1.Repository
             _connect = connect;
         }
 
-        public async Task<int> getSumQuantityReviewByIdProduct(int id) // đếm số luowngj review theo mã sản phẩm
+        public async Task<Dictionary<int, int>> getSumQuantityReviewByIdProduct(List<int> ids) // đếm số luowngj review theo mã sản phẩm
         {
+          if (ids == null)
+                return new Dictionary<int, int>();
             var result = await (
                 from v in _connect.variants
                 join o in _connect.orders on v.id equals o.variantid
                 join r in _connect.reviews on o.id equals r.orderid
-                where v.productid == id
-                select r
-            ).CountAsync();
-            return result;
+                where ids.Contains(v.productid)
+                group r by v.productid into g
+                select new
+                {
+                    productid = g.Key,
+                    reviewcount = g.Count()
+                }
+            ).ToListAsync();
+            return result.ToDictionary(x => x.productid, x => x.reviewcount);
         }
 
 
-        public async Task<int> getSumRatingByIdProduct(int id) // tổng số rating theo mã sản phâm
+        public async Task<Dictionary<int, int>> getSumRatingByIdsProduct(List<int> ids) // tổng số rating theo mã sản phâm
         {
+            if (ids == null)
+                return new Dictionary<int, int>();
             var result = await (
                 from v in _connect.variants
                 join o in _connect.orders on v.id equals o.variantid
                 join r in _connect.reviews on o.id equals r.orderid
-                where v.productid == id
-                select (int?)r.rating
-            ).SumAsync() ?? 0;
-            return result;
+                where ids.Contains(v.productid)
+                group r by v.productid into g
+                select new
+                {
+                    productid = g.Key,
+                    reviewsum = g.Sum(x => x.rating)
+                }
+            ).ToListAsync();
+            return result.ToDictionary(x => x.productid, x => x.reviewsum);
         }
 
     }

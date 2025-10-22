@@ -7,5 +7,6 @@ namespace be_dotnet_ecommerce1.Repository.IReopsitory
         public List<Category> getParentById(int? id);
         public List<CategoryAdmin> getCategoryAdmin();
         public Task<List<Category>> getAllCategory();
+        public Task<List<Category>> getCategoryByProductIds(List<int> ids);
     }
 }
