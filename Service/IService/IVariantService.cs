@@ -6,7 +6,7 @@ namespace be_dotnet_ecommerce1.Service.IService
 {
     public interface IVariantService
     {
-        public Task<List<VariantFilterDTO>> getValueVariant(int id);
+        public Task<List<VariantFilterDTO>> getValueVariant();
         public Task<List<Variant>> GetVariantByFilter(FilterDTO dTO);
     }
 }

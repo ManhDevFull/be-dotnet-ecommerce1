@@ -75,7 +75,7 @@ namespace be_dotnet_ecommerce1.Service
       {baseSql}
       {wheresql}
       order by p.id
-      offset {(dTO.pageNumber - 1) * dTO.pageSize} rows // theo page (bỏ qua các sản phẩm từ page trước)
+      offset {(dTO.pageNumber - 1) * dTO.pageSize} rows 
       fetch next  {dTO.pageSize} rows only"; // rowns only
 
       // thực thi sql

@@ -14,7 +14,7 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
         {
             _connect = connect;
         }
-        public async Task<List<VariantFilterDTO>> GetValueVariant(int id)
+        public async Task<List<VariantFilterDTO>> GetValueVariant()
         {
             var data = await _connect.Database
         .SqlQueryRaw<VariantFilterDTO>(@"
@@ -89,21 +89,6 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
                 }
             }
 
-
-            // if (dTO.Filter != null)
-            // {
-            //     foreach (var item in dTO.Filter)
-            //     {
-            //         var key = item.Key;
-            //         var value = item.Value;
-            //         if (value != null)
-            //         {
-            //             var values = string.Join(",", value.Select(v => $"'{v}'"));
-            //             //conditions.Add($"valuevariant ->> '{key}' IN ({values})");
-            //             conditions.Add($"valuevariant ->> '{key}' IN ({values})");
-            //         }
-            //     }
-            // }
             if (conditions.Count > 0)
             {
                 sql += " where " + string.Join(" AND ", conditions);

@@ -14,17 +14,11 @@ namespace be_dotnet_ecommerce1.Controllers
         {
             _service = service;
         }
-        [HttpGet("{id}")]
-        public async Task<IActionResult> getValueVariant(int id)
+        [HttpGet]
+        public async Task<IActionResult> getValueVariant()
         {
-            var list = await _service.getValueVariant(id);
+            var list = await _service.getValueVariant();
             return Ok(list);
-        }
-        [HttpPost("filter")] // done
-        public async Task<IActionResult> resFilter(FilterDTO dTO)
-        {
-            var result = await _service.GetVariantByFilter(dTO);
-            return Ok(dTO);
         }
     }
 }
