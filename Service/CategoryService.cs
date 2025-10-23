@@ -25,6 +25,10 @@ namespace be_dotnet_ecommerce1.Service.IService
       var list = _repo.getCategoryAdmin();
       return list;
     }
-
+    public List<BrandOptionDTO> getBrandByCate(int? categoryId)
+    {
+      var list = _repo.getBrandByCate(categoryId);
+      return list;
+    }
   }
 }

@@ -20,6 +20,14 @@ namespace dotnet.Repository.IRepository
         bool? stock,
         string sort = "newest");
     public int getQuantityByIdCategory(int id);
-    public Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO);
+    // public Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO);
+    public Task<List<ProductFilterDTO>> GetProductByFilter(FilterDTO dTO);
+    public Task<ProductAdminDTO?> CreateProductAsync(ProductAdminCreateRequest request);
+    public Task<ProductAdminDTO?> UpdateProductAsync(int productId, ProductAdminUpdateRequest request);
+    public Task<bool> DeleteProductAsync(int productId);
+    public Task<ProductAdminDTO?> GetProductAdminByIdAsync(int productId);
+    public Task<ProductAdminDTO?> CreateVariantAsync(int productId, VariantAdminCreateRequest request);
+    public Task<ProductAdminDTO?> UpdateVariantAsync(int productId, int variantId, VariantAdminUpdateRequest request);
+    public Task<ProductAdminDTO?> DeleteVariantAsync(int productId, int variantId);
   }
 }

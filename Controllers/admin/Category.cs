@@ -25,5 +25,17 @@ namespace dotnet.Controllers.admin
         message = "Success"
       });
     }
+    [HttpGet("brand")]
+    [Authorize(Roles = "0")]
+    public IActionResult GetBrandByCate([FromQuery(Name = "cate")] int? categoryId)
+    {
+      var list = _service.getBrandByCate(categoryId);
+      return Ok(new
+      {
+        status = 200,
+        data = list,
+        message = "Success"
+      });
+    }
   }
 }

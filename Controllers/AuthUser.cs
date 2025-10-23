@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using be_dotnet_ecommerce1.Data;
+using dotnet.Model;
+
 using be_dotnet_ecommerce1.Model;
 using dotnet.Dtos;
 using System.IdentityModel.Tokens.Jwt;

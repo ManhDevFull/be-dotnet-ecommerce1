@@ -31,7 +31,7 @@ namespace dotnet.Service
 
     public async Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
     {
-      var result = await _repo.getProductByFilter(dTO);
+      var result = await _repo.GetProductByFilter(dTO);
       return result;
     }
 
@@ -41,6 +41,35 @@ namespace dotnet.Service
       var quantity = _repo.getQuantityByIdCategory(id);
       return quantity;
     }
+
+    public Task<ProductAdminDTO?> CreateProductAsync(ProductAdminCreateRequest request)
+    {
+      return _repo.CreateProductAsync(request);
+    }
+
+    public Task<ProductAdminDTO?> UpdateProductAsync(int productId, ProductAdminUpdateRequest request)
+    {
+      return _repo.UpdateProductAsync(productId, request);
+    }
+
+    public Task<bool> DeleteProductAsync(int productId)
+    {
+      return _repo.DeleteProductAsync(productId);
+    }
+
+    public Task<ProductAdminDTO?> CreateVariantAsync(int productId, VariantAdminCreateRequest request)
+    {
+      return _repo.CreateVariantAsync(productId, request);
+    }
+
+    public Task<ProductAdminDTO?> UpdateVariantAsync(int productId, int variantId, VariantAdminUpdateRequest request)
+    {
+      return _repo.UpdateVariantAsync(productId, variantId, request);
+    }
+
+    public Task<ProductAdminDTO?> DeleteVariantAsync(int productId, int variantId)
+    {
+      return _repo.DeleteVariantAsync(productId, variantId);
+    }
   }
 }
-

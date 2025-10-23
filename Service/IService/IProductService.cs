@@ -18,6 +18,12 @@ namespace be.Service.IService
     string? brand,
     bool? stock,
     string sort = "newest");
+    public Task<ProductAdminDTO?> CreateProductAsync(ProductAdminCreateRequest request);
+    public Task<ProductAdminDTO?> UpdateProductAsync(int productId, ProductAdminUpdateRequest request);
+    public Task<bool> DeleteProductAsync(int productId);
+    public Task<ProductAdminDTO?> CreateVariantAsync(int productId, VariantAdminCreateRequest request);
+    public Task<ProductAdminDTO?> UpdateVariantAsync(int productId, int variantId, VariantAdminUpdateRequest request);
+    public Task<ProductAdminDTO?> DeleteVariantAsync(int productId, int variantId);
   }
 
 }

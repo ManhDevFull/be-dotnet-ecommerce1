@@ -1,7 +1,9 @@
 using be_dotnet_ecommerce1.Data;
-using be_dotnet_ecommerce1.Model;
+using be_dotnet_ecommerce1.Dtos;
+using dotnet.Model;
 using be_dotnet_ecommerce1.Repository.IReopsitory;
 using Microsoft.EntityFrameworkCore;
+using be_dotnet_ecommerce1.Model;
 
 namespace be_dotnet_ecommerce1.Repository
 {
@@ -41,6 +43,32 @@ namespace be_dotnet_ecommerce1.Repository
             ";
 
       return _connect.categoryAdmins.FromSqlRaw(sql).AsNoTracking().ToList();
+    }
+
+    public List<BrandOptionDTO> getBrandByCate(int? categoryId)
+    {
+      if (categoryId.HasValue)
+      {
+        return (from stats in _connect.category_brand_stats.AsNoTracking()
+                join brand in _connect.brands.AsNoTracking() on stats.brand_id equals brand.id
+                where stats.category_id == categoryId.Value
+                orderby brand.name
+                select new BrandOptionDTO
+                {
+                  id = brand.id,
+                  name = brand.name
+                }).ToList();
+      }
+
+      return _connect.brands
+        .AsNoTracking()
+        .OrderBy(b => b.name)
+        .Select(b => new BrandOptionDTO
+        {
+          id = b.id,
+          name = b.name
+        })
+        .ToList();
     }
   }
 }

@@ -7,5 +7,6 @@ namespace be_dotnet_ecommerce1.Service.IService
   {
     public List<CategoryDTO> getCategoryParentById(int? id);
     public List<CategoryAdminDTO> getCategoryAdmin();
+    public List<BrandOptionDTO> getBrandByCate(int? categoryId);
   }
 }
