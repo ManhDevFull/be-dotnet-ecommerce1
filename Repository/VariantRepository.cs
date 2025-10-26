@@ -16,57 +16,63 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
         }
         public async Task<List<VariantFilterDTO>> GetValueVariant()
         {
-            var data = await _connect.Database
-        .SqlQueryRaw<VariantFilterDTO>(@"
-        SELECT 
-                key, 
-                array_agg(DISTINCT value ORDER BY value) AS values
-            FROM (
-                -- Lấy các thuộc tính từ valuevariant
-                SELECT 
-                    kv.key::text AS key, 
-                    kv.value::text AS value
-                FROM category 
-                JOIN product ON category.id = product.category
-                JOIN variant ON product.id = variant.product_id
-                CROSS JOIN LATERAL jsonb_each_text(variant.valuevariant) AS kv(key, value)
-                --WHERE category.id = 1
-                --AND variant.isdeleted = false
-                --AND product.isdeleted = false
-                
-                UNION ALL
-                
-                -- Thêm giá như một thuộc tính
-                SELECT 
-                    'price' AS key,
-                    v.price::text AS value
-                FROM category c
-                JOIN product p ON c.id = p.category
-                JOIN variant v ON p.id = v.product_id
-                --WHERE c.id = 1
-                AND v.isdeleted = false
-                AND p.isdeleted = false
+            //     var data = await _connect.Database
+            // .SqlQueryRaw<VariantFilterDTO>(@"
+            //     SELECT 
+            //     key, 
+            //     array_agg(DISTINCT value ORDER BY value) AS values
+            // FROM (
+            //     -- Lấy các thuộc tính từ valuevariant (Không thay đổi)
+            //     SELECT 
+            //         kv.key::text AS key, 
+            //         kv.value::text AS value
+            //     FROM category 
+            //     JOIN product ON category.id = product.category
+            //     JOIN variant ON product.id = variant.product_id
+            //     CROSS JOIN LATERAL jsonb_each_text(variant.valuevariant) AS kv(key, value)
+            //     --WHERE category.id = 1
+            //     --AND variant.isdeleted = false
+            //     --AND product.isdeleted = false
 
+            //     UNION ALL
 
-                union all
-                --- Thêm thương hiệu
-                SELECT
-                'brand' as Key,
-                p.brand::text As value
-                from product p
+            //     -- Thêm giá như một thuộc tính (Không thay đổi)
+            //     SELECT 
+            //         'price' AS key,
+            //         v.price::text AS value
+            //     FROM category c
+            //     JOIN product p ON c.id = p.category
+            //     JOIN variant v ON p.id = v.product_id
+            //     --WHERE c.id = 1
+            //     AND v.isdeleted = false
+            //     AND p.isdeleted = false
 
-                union all
-                -- thêm danh mục
-                SELECT
-                    'category' as key,
-                    c.namecategory::text as value
-                from category c
-            ) AS combined
-            GROUP BY key
-            ORDER BY key;
-        ")
-        .ToListAsync();
+            //     UNION ALL
 
+            //     --- Thêm thương hiệu (ĐÃ CẬP NHẬT)
+            //     SELECT
+            //         'brand' as key,
+            //         b.name::text as value  -- Lấy 'name' từ bảng 'brand'
+            //     FROM product p
+            //     JOIN brand b ON p.brand_id = b.id -- Join 'product' với 'brand' qua khóa ngoại
+
+            //     UNION ALL
+
+            //     -- thêm danh mục (Không thay đổi)
+            //     SELECT
+            //         'category' as key,
+            //         c.namecategory::text as value
+            //     FROM category c
+            // ) AS combined
+            // GROUP BY key
+            // ORDER BY key;
+            // ")
+            // .ToListAsync();
+
+            //     return data;
+
+            // chuyển sang dùng view
+            var data = await _connect.Database.SqlQueryRaw<VariantFilterDTO>(@"SELECT * from v_variant_filters").ToListAsync();
             return data;
         }
         public async Task<List<Variant>> GetVariantByFilter(FilterDTO dTO) // done

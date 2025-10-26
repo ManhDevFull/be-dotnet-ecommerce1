@@ -36,9 +36,10 @@ namespace be_dotnet_ecommerce1.Service
       // var result = await _repo.getProductByFilter(dTO);
       //return result;
       var conditions = new List<string>();
-      var baseSql = @"from product p
-                JOIN category c ON (p.category = c.id)
-                JOIN variant v on (p.id = v.product_id)";
+      // var baseSql = @"from product p
+      //           JOIN category c ON (p.category = c.id)
+      //           JOIN variant v on (p.id = v.product_id)";
+      var baseSql = @"SELECT *  FROM v_product_with_variants view";
       if (dTO.Filter != null)
       {
         foreach (var item in dTO.Filter)
@@ -50,21 +51,33 @@ namespace be_dotnet_ecommerce1.Service
             {
               var min = item.Value[0];
               var max = item.Value[1];
-              conditions.Add($"v.price BETWEEN {min} AND {max}");
+              //conditions.Add($"v.price BETWEEN {min} AND {max}");
+              conditions.Add($@"exists (
+                select 1 
+                from jsonb_array_elements(view.variants) as elem
+                WHERE (elem->'price')::numeric BETWEEN {min} AND {max}
+              )");
             }
           }
           else
           {
             var values = string.Join(",", item.Value.Select(v => $"'{v}'"));
             if (key == "brand")
-              conditions.Add($"p.brand IN ({values})");
+              conditions.Add($"view.brand IN ({values})");
             else if (key == "category")
-              conditions.Add($"c.nameCategory IN ({values})");
+              conditions.Add($"view.category_name  IN ({values})");
             else
-              conditions.Add($"v.valuevariant ->> '{key}' IN ({values})");
+              //conditions.Add($"v.valuevariant ->> '{key}' IN ({values})");
+              conditions.Add($@" exists (
+                select 1 
+                from jsonb_array_elements(view.variants) as elem
+                WHERE ((elem->'valuevariant')->>'{key}) IN ({values})
+            )");
           }
         }
       }
+      
+      ///// phần trên đã xong nhưng chưa test
       string wheresql = "";
       if (conditions.Any())
         wheresql = " where " + string.Join(" and ", conditions);
@@ -106,7 +119,7 @@ namespace be_dotnet_ecommerce1.Service
       var orderTask = await _repoReview.getSumQuantityReviewByIdProduct(productIds);
       var categoryTask = await _repoCategory.getCategoryByProductIds(productIds);
       var variantTask = await _repoVariant.getVariantByIdProducts(productIds);
- 
+
       foreach (var p in productRaw)
       {
         discountTask.TryGetValue(p.id, out var discount);
