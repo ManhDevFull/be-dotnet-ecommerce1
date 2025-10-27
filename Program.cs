@@ -32,6 +32,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IDiscountRepository, DiscountRepository>();
+builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 // CORS

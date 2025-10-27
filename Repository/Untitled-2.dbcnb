@@ -1,0 +1,291 @@
+cells:
+  - kind: 2
+    languageId: sql
+    value: ""
+    metadata: {}
+  - kind: 2
+    languageId: sql
+    value: "DROP VIEW IF EXISTS V_Products_filter;\r
+
+      CREATE OR REPLACE VIEW V_Products_filter AS\r
+
+      WITH review_stats AS (\r
+
+      \    SELECT \r
+
+      \        v.product_id,\r
+
+      \        SUM(r.rating) as sum_rating,\r
+
+      \        COUNT(r.id) as count_review\r
+
+      \    FROM variant v\r
+
+      \    INNER JOIN orders o ON o.variant_id = v.id\r
+
+      \    INNER JOIN review r ON r.order_id = o.id\r
+
+      \    WHERE v.isdeleted = false\r
+
+      \    GROUP BY v.product_id\r
+
+      ),\r
+
+      variant_agg AS (\r
+
+      \    -- Aggregate variants TRƯỚC, mỗi product CHỈ 1 ROW\r
+
+      \    SELECT \r
+
+      \        v2.product_id,\r
+
+      \        jsonb_agg(\r
+
+      \            jsonb_build_object(\r
+
+      \                'variant_id', v2.id,\r
+
+      \                'valuevariant', v2.valuevariant,\r
+
+      \                'price', v2.price,\r
+
+      \                'stock', v2.stock,\r
+
+      \                'discounts', COALESCE(\r
+
+      \                    (\r
+
+      \                        SELECT jsonb_agg(\r
+
+      \                            jsonb_build_object(\r
+
+      \                                'discount_id', d.id,\r
+
+      \                                'typediscount', d.typediscount,\r
+
+      \                                'discount', d.discount,\r
+
+      \                                'startTime', d.starttime,\r
+
+      \                                'endTime', d.endtime\r
+
+      \                            )\r
+
+      \                        )\r
+
+      \                        FROM discount_product ds\r
+
+      \                        JOIN discount d ON ds.discount_id = d.id\r
+
+      \                        WHERE ds.variant_id = v2.id\r
+
+      \                    ),\r
+
+      \                    '[]'::jsonb\r
+
+      \                )\r
+
+      \            )\r
+
+      \        ) as variants\r
+
+      \    FROM variant v2\r
+
+      \    WHERE v2.isdeleted = false\r
+
+      \    GROUP BY v2.product_id\r
+
+      )\r
+
+      SELECT\r
+
+      \    p.id as idproduct,\r
+
+      \    p.nameproduct,\r
+
+      \    c.id AS category_id,\r
+
+      \    c.namecategory,\r
+
+      \    b.name AS brand_name,\r
+
+      \    COALESCE(va.variants, '[]'::jsonb) AS variants,\r
+
+      \    COALESCE(rs.sum_rating, 0) AS sum_ratingOrder,\r
+
+      \    COALESCE(rs.count_review, 0) AS count_orderReview\r
+
+      FROM product p\r
+
+      LEFT JOIN brand b ON p.brand_id = b.id\r
+
+      LEFT JOIN category c ON p.category = c.id\r
+
+      LEFT JOIN variant_agg va ON va.product_id = p.id\r
+
+      LEFT JOIN review_stats rs ON rs.product_id = p.id;\r
+
+      \r
+
+      \r
+
+      \r
+
+      SELECT * FROM v_products_filter ;\r
+
+      select * FROM review \r
+
+      select * from orders\r
+
+      \r
+
+      \r
+
+      \r
+
+      \r
+
+      -- Xem toàn bộ luồng từ review → order → variant → product\r
+
+      SELECT \r
+
+      \    r.id as review_id,\r
+
+      \    r.rating,\r
+
+      \    o.id as order_id,\r
+
+      \    v.id as variant_id,\r
+
+      \    v.valuevariant,\r
+
+      \    p.id as product_id,\r
+
+      \    p.nameproduct\r
+
+      FROM review r\r
+
+      INNER JOIN orders o ON r.order_id = o.id\r
+
+      INNER JOIN variant v ON o.variant_id = v.id\r
+
+      INNER JOIN product p ON v.product_id = p.id\r
+
+      WHERE v.isdeleted = false\r
+
+      ORDER BY p.id, r.id;\r
+
+      \r
+
+      \r
+
+      -- Thống kê theo product\r
+
+      SELECT \r
+
+      \    p.id as product_id,\r
+
+      \    p.nameproduct,\r
+
+      \    COUNT(DISTINCT r.id) as total_reviews,\r
+
+      \    SUM(r.rating) as total_rating,\r
+
+      \    ROUND(AVG(r.rating)::numeric, 2) as avg_rating,\r
+
+      \    -- Xem có bao nhiêu variants được review\r
+
+      \    COUNT(DISTINCT v.id) as reviewed_variants,\r
+
+      \    -- Xem có bao nhiêu orders có review\r
+
+      \    COUNT(DISTINCT o.id) as reviewed_orders\r
+
+      FROM product p\r
+
+      LEFT JOIN variant v ON v.product_id = p.id AND v.isdeleted = false\r
+
+      LEFT JOIN orders o ON o.variant_id = v.id\r
+
+      LEFT JOIN review r ON r.order_id = o.id\r
+
+      GROUP BY p.id, p.nameproduct\r
+
+      ORDER BY p.id;\r
+
+      \r
+
+      \r
+
+      \r
+
+      SELECT \r
+
+      \    p.id as product_id,\r
+
+      \    p.nameproduct,\r
+
+      \    CASE \r
+
+      \        WHEN COUNT(r.id) > 0 THEN 'CÓ REVIEW'\r
+
+      \        ELSE 'KHÔNG CÓ REVIEW'\r
+
+      \    END as status,\r
+
+      \    COUNT(r.id) as review_count,\r
+
+      \    COALESCE(SUM(r.rating), 0) as total_rating\r
+
+      FROM product p\r
+
+      LEFT JOIN variant v ON v.product_id = p.id AND v.isdeleted = false\r
+
+      LEFT JOIN orders o ON o.variant_id = v.id\r
+
+      LEFT JOIN review r ON r.order_id = o.id\r
+
+      GROUP BY p.id, p.nameproduct\r
+
+      ORDER BY COUNT(r.id) DESC, p.id;\r
+
+      \r
+
+      -- Xem cụ thể: Review nào đánh giá product nào\r
+
+      SELECT \r
+
+      \    p.id as product_id,\r
+
+      \    p.nameproduct,\r
+
+      \    v.valuevariant,\r
+
+      \    r.id as review_id,\r
+
+      \    r.rating\r
+
+      FROM review r\r
+
+      INNER JOIN orders o ON r.order_id = o.id\r
+
+      INNER JOIN variant v ON o.variant_id = v.id\r
+
+      INNER JOIN product p ON v.product_id = p.id\r
+
+      WHERE v.isdeleted = false\r
+
+      ORDER BY p.id DESC;\r
+
+      \r
+
+      \r
+
+      \r\n"
+    metadata: {}
+metadata:
+  conn:
+    id: iwdSQjg3WX78MtqzkipM3
+    name: Ecommerce1_DB
+  database: ecommerce1
+  schema: public

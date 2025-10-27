@@ -14,6 +14,7 @@ namespace be_dotnet_ecommerce1.Data
     public DbSet<CategoryAdmin> CategoryAdmins { get; set; }
     public DbSet<Account> accounts { get; set; }
     public DbSet<Product> products { get; set; }
+    public DbSet<Brand> brands { get; set; }
     public DbSet<Variant> variants { get; set; }
     public DbSet<Discount> discounts { get; set; }
     public DbSet<Order> orders { get; set; }
@@ -52,7 +53,7 @@ namespace be_dotnet_ecommerce1.Data
 
                  entity.Property(e => e.id).HasColumnName("id");
                  entity.Property(e => e.nameproduct).HasColumnName("nameproduct");
-                 entity.Property(e => e.brand).HasColumnName("brand");
+                 entity.Property(e => e.brand_id).HasColumnName("brand_id");
                  entity.Property(e => e.description).HasColumnName("description");
                  entity.Property(e => e.categoryId).HasColumnName("category");
                  entity.Property(e => e.imageurls)
@@ -61,11 +62,19 @@ namespace be_dotnet_ecommerce1.Data
                  entity.Property(e => e.createdate).HasColumnName("createdate");
                  entity.Property(e => e.updatedate).HasColumnName("updatedate");
                  entity.Property(e => e.isdeleted).HasColumnName("isdeleted");
+                 entity.HasOne(p => p.brand).WithMany(b => b.products).HasForeignKey(p => p.brand_id);
                  //          entity.HasOne(p => p.Category)
                  // .WithMany(c => c.Products)
                  // .HasForeignKey(p => p.category)
                  // .HasConstraintName("fk_product_category");
                });
+
+      // brand
+      modelBuilder.Entity<Brand>(entity =>
+      {
+        entity.ToTable("brand");
+        entity.HasKey(e => e.id);
+      });
       //variant
       modelBuilder.Entity<Variant>(entity =>
       {
@@ -76,7 +85,7 @@ namespace be_dotnet_ecommerce1.Data
         entity.Property(e => e.valuevariant).HasColumnName("valuevariant").HasColumnType("JSONB");
         entity.Property(e => e.stock).HasColumnName("stock");
         entity.Property(e => e.inputprice).HasColumnName("inputprice");
-        entity.HasOne(v => v.Product).WithMany(p => p.Variants).HasForeignKey(v=>v.productid);
+        entity.HasOne(v => v.Product).WithMany(p => p.Variants).HasForeignKey(v => v.productid);
         entity.HasMany(v => v.discountProduct).WithOne(dp => dp.variant).HasForeignKey("_idVariant");
         entity.HasMany(v => v.Orders).WithOne(o => o.variant).HasForeignKey("variant_id");
       });

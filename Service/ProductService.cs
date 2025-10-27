@@ -16,12 +16,14 @@ namespace be_dotnet_ecommerce1.Service
     private readonly ICategoryRepository _repoCategory;
     private readonly IReviewRepository _repoReview;
     private readonly IDiscountRepository _repoDiscount;
+    private readonly IBrandRepository _repoBrand;
 
     public ProductService(IProductRepository repoProduct,
         IVariantRepository repoVariant,
         ICategoryRepository repoCategory,
         IReviewRepository repoReview,
-        IDiscountRepository repoDiscount
+        IDiscountRepository repoDiscount,
+        IBrandRepository repoBrand
     )
     {
       _repoProduct = repoProduct;
@@ -29,6 +31,7 @@ namespace be_dotnet_ecommerce1.Service
       _repoCategory = repoCategory;
       _repoReview = repoReview;
       _repoDiscount = repoDiscount;
+      _repoBrand = repoBrand;
     }
 
     public async Task<PagedResultDTO<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
@@ -36,10 +39,12 @@ namespace be_dotnet_ecommerce1.Service
       // var result = await _repo.getProductByFilter(dTO);
       //return result;
       var conditions = new List<string>();
-      // var baseSql = @"from product p
-      //           JOIN category c ON (p.category = c.id)
-      //           JOIN variant v on (p.id = v.product_id)";
-      var baseSql = @"SELECT *  FROM v_product_with_variants view";
+      var baseSql = @"from product p
+                JOIN category c ON (p.category = c.id)
+                JOIN variant v on (p.id = v.product_id)
+                JOIN brand b on(p.brand_id = b.id)
+                ";
+      //var baseSql = @"SELECT *  FROM v_product_with_variants view";
       if (dTO.Filter != null)
       {
         foreach (var item in dTO.Filter)
@@ -51,32 +56,32 @@ namespace be_dotnet_ecommerce1.Service
             {
               var min = item.Value[0];
               var max = item.Value[1];
-              //conditions.Add($"v.price BETWEEN {min} AND {max}");
-              conditions.Add($@"exists (
-                select 1 
-                from jsonb_array_elements(view.variants) as elem
-                WHERE (elem->'price')::numeric BETWEEN {min} AND {max}
-              )");
+              conditions.Add($"v.price BETWEEN {min} AND {max}");
+              // conditions.Add($@"exists (
+              //   select 1 
+              //   from jsonb_array_elements(view.variants) as elem
+              //   WHERE (elem->'price')::numeric BETWEEN {min} AND {max}
+              // )");
             }
           }
           else
           {
             var values = string.Join(",", item.Value.Select(v => $"'{v}'"));
             if (key == "brand")
-              conditions.Add($"view.brand IN ({values})");
+              conditions.Add($"b.name IN ({values})");
             else if (key == "category")
-              conditions.Add($"view.category_name  IN ({values})");
+              conditions.Add($"c.categoryname  IN ({values})");
             else
-              //conditions.Add($"v.valuevariant ->> '{key}' IN ({values})");
-              conditions.Add($@" exists (
-                select 1 
-                from jsonb_array_elements(view.variants) as elem
-                WHERE ((elem->'valuevariant')->>'{key}) IN ({values})
-            )");
+              conditions.Add($"v.valuevariant ->> '{key}' IN ({values})");
+            //   conditions.Add($@" exists (
+            //     select 1 
+            //     from jsonb_array_elements(view.variants) as elem
+            //     WHERE ((elem->'valuevariant')->>'{key}) IN ({values})
+            // )");
           }
         }
       }
-      
+
       ///// phần trên đã xong nhưng chưa test
       string wheresql = "";
       if (conditions.Any())
@@ -110,7 +115,8 @@ namespace be_dotnet_ecommerce1.Service
 
       // convert dữ liệu sang dto cho giao diện
 
-      var categoryIds = productRaw.Select(p => p.categoryId).Distinct().ToList();      // lấy ra id category
+      //var categoryIds = productRaw.Select(p => p.categoryId).Distinct().ToList();      // lấy ra id category
+      //var brandIds = productRaw.Select(p => p.brand_id).Distinct().ToList();
       var productIds = productRaw.Select(p => p.id).Distinct().ToList(); // lấy ra id product từ product raw
 
       var products = new List<ProductFilterDTO>(); // tạo danh sách trả về sản phẩm đã lọc
@@ -119,6 +125,7 @@ namespace be_dotnet_ecommerce1.Service
       var orderTask = await _repoReview.getSumQuantityReviewByIdProduct(productIds);
       var categoryTask = await _repoCategory.getCategoryByProductIds(productIds);
       var variantTask = await _repoVariant.getVariantByIdProducts(productIds);
+      var brandTask = await _repoBrand.getBrandByProductIds(productIds);
 
       foreach (var p in productRaw)
       {
@@ -127,12 +134,13 @@ namespace be_dotnet_ecommerce1.Service
         orderTask.TryGetValue(p.id, out var order);
         var category = categoryTask.FirstOrDefault(c => c.id == p.categoryId);
         var variant = variantTask.Where(v => v.productid == p.id).Distinct();
+        var brandui = brandTask.FirstOrDefault(b => b.id == p.brand_id);
         products.Add(new ProductFilterDTO
         {
           id = p.id,
           name = p.nameproduct,
           description = p.description,
-          brand = p.brand,
+          brand = brandui?.name?? "Unknown",
           categoryId = p.categoryId,
           //categoryName = p.Category.namecategory,
           //categoryName = p.Category?.namecategory ?? "Unknown",

@@ -10,9 +10,10 @@ namespace dotnet.Model
   {
     public int id { get; set; }
     public string nameproduct { get; set; } = null!;
-    public string? brand { get; set; }
+    public int brand_id { get; set; }
     public string description { get; set; } = null!;
     public int categoryId { get; set; }
+    public Brand? brand { get; set; }
     public Category Category { get; set; } = null!;
     public List<Variant>? Variants { get; set; }
     public List<string> imageurls { get; set; } = new();
