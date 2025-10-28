@@ -13,6 +13,7 @@ namespace be_dotnet_ecommerce1.Data
     public ConnectData() { }
     public ConnectData(DbContextOptions<ConnectData> options) : base(options) { }
     public DbSet<Account> accounts { get; set; }
+    public object Accounts { get; internal set; }
     public DbSet<Address> address { get; set; }
     public DbSet<Category> categories { get; set; }
     public DbSet<Discount> discounts { get; set; }

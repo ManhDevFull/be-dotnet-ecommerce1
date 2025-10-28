@@ -10,6 +10,7 @@ namespace be_dotnet_ecommerce1.Model
     public string? firstname { get; set; }
     public DateTime? bod { get; set; }
     public string? password { get; set; }
+    // public string Password { get; internal set; }
     public int role { get; set; }
     public string? avatarimg { get; set; }
     public DateTime? createdate { get; set; }
