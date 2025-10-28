@@ -7,7 +7,7 @@ using be_dotnet_ecommerce1.Model;
 using be_dotnet_ecommerce1.Repository.IRepository;
 using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
-
+using System.Text.Json;
 namespace be_dotnet_ecommerce1.Repository
 {
     public class ProductRepository : IProductRepository
@@ -25,12 +25,28 @@ namespace be_dotnet_ecommerce1.Repository
         }
 
 
-        public async Task<List<Product>> getProductBySql(string sql)
+        public async Task<List<ProductFilterDTO>> getProductBySql(string sql)
         {
-            var result = await _connect.products
-                            .FromSqlRaw(sql)
-                            .ToListAsync();
-            return result;
+            var rawData = await _connect.Set<V_ProductFilter>()
+            .FromSqlRaw(sql)
+            .ToListAsync();
+            var rs = rawData.Select(r => new ProductFilterDTO
+            {
+                id = r.id,
+                name = r.name,
+                description = r.description,
+                brand = r.brand,
+                categoryId = r.categoryId,
+                categoryName = r.categoryName,
+                imgUrls = r.imgUrls,
+                variant = string.IsNullOrEmpty(r.variant) 
+            ? null 
+            : JsonSerializer.Deserialize<List<VariantDTO>>(r.variant),
+
+                rating = r.rating,
+                order = r.order
+            }).ToList();
+            return rs;
         }
 
         public int getQuantityByIdCategory(int id)

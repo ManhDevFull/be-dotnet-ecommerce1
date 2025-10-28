@@ -71,60 +71,6 @@ cells:
 
       SELECT * from v_variant_filters\r
 
-      SELECT *  FROM v_product_with_variants view\r
-
-      WHERE exists (\r
-
-      \    select 1 \r
-
-      \    from jsonb_array_elements(view.variants) as elem\r
-
-      \    WHERE (elem->'price')::numeric BETWEEN 20000 AND 40000\r
-
-      )\r
-
-      \r
-
-      -- tạo view cho filter product\r
-
-      \r
-
-      SELECT *  FROM v_product_with_variants view\r
-
-      WHERE exists (\r
-
-      \    select 1 \r
-
-      \    from jsonb_array_elements(view.variants) as elem\r
-
-      \    WHERE ((elem->'valuevariant')->>'color') in ('black', 'blue')\r
-
-      )\r
-
-      \r
-
-      \r
-
-      SELECT distinct *  from product p\r
-
-      \                JOIN category c ON (p.category = c.id)\r
-
-      \                JOIN variant v on (p.id = v.product_id)\r
-
-      \                JOIN brand b on(p.brand_id = b.id)\r
-
-      \r
-
-      \r
-
-      \r
-
-      \r
-
-      \r
-
-      \r
-
       \r
 
       \r
@@ -255,12 +201,7 @@ cells:
       select * from v_products_filter\r
 
       \r\n"
-    metadata:
-      conn:
-        id: iwdSQjg3WX78MtqzkipM3
-        name: Ecommerce1_DB
-      database: ecommerce1
-      schema: public
+    metadata: {}
 metadata:
   conn:
     id: iwdSQjg3WX78MtqzkipM3

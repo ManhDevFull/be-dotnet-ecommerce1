@@ -1,4 +1,6 @@
 using System.Runtime.Intrinsics.Arm;
+using System.Text.Json;
+using be_dotnet_ecommerce1.Dtos;
 using be_dotnet_ecommerce1.Model;
 using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +22,9 @@ namespace be_dotnet_ecommerce1.Data
     public DbSet<Order> orders { get; set; }
     public DbSet<DiscountProduct> discountProducts { get; set; }
     public DbSet<Review> reviews { get; set; }
+
+    /// view
+    public DbSet<V_ProductFilter> v_ProductFilters{ get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       modelBuilder.Entity<Category>(entity =>
@@ -131,6 +136,12 @@ namespace be_dotnet_ecommerce1.Data
         entity.ToTable("review");
         entity.HasKey("id");
         entity.Property(e => e.orderid).HasColumnName("order_id");
+      });
+      // view v_product_filter
+      modelBuilder.Entity<V_ProductFilter>(entity =>
+      {
+        entity.HasNoKey();
+        entity.ToView("V_Products_filter");
       });
     }
   }

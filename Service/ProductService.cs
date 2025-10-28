@@ -36,15 +36,8 @@ namespace be_dotnet_ecommerce1.Service
 
     public async Task<PagedResultDTO<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
     {
-      // var result = await _repo.getProductByFilter(dTO);
-      //return result;
       var conditions = new List<string>();
-      var baseSql = @"from product p
-                JOIN category c ON (p.category = c.id)
-                JOIN variant v on (p.id = v.product_id)
-                JOIN brand b on(p.brand_id = b.id)
-                ";
-      //var baseSql = @"SELECT *  FROM v_product_with_variants view";
+      var baseSql = @"FROM v_products_filter view";
       if (dTO.Filter != null)
       {
         foreach (var item in dTO.Filter)
@@ -56,52 +49,52 @@ namespace be_dotnet_ecommerce1.Service
             {
               var min = item.Value[0];
               var max = item.Value[1];
-              conditions.Add($"v.price BETWEEN {min} AND {max}");
-              // conditions.Add($@"exists (
-              //   select 1 
-              //   from jsonb_array_elements(view.variants) as elem
-              //   WHERE (elem->'price')::numeric BETWEEN {min} AND {max}
-              // )");
+              //conditions.Add($"v.price BETWEEN {min} AND {max}");
+              conditions.Add($@"exists (
+                select 1 
+                from jsonb_array_elements(view.variant) as elem
+                WHERE (elem->'price')::numeric BETWEEN {min} AND {max}
+              )");
             }
           }
           else
           {
             var values = string.Join(",", item.Value.Select(v => $"'{v}'"));
             if (key == "brand")
-              conditions.Add($"b.name IN ({values})");
+              conditions.Add($"view.brand IN ({values})");
             else if (key == "category")
-              conditions.Add($"c.categoryname  IN ({values})");
+              conditions.Add($"view.categoryName  IN ({values})");
             else
-              conditions.Add($"v.valuevariant ->> '{key}' IN ({values})");
-            //   conditions.Add($@" exists (
-            //     select 1 
-            //     from jsonb_array_elements(view.variants) as elem
-            //     WHERE ((elem->'valuevariant')->>'{key}) IN ({values})
-            // )");
+              //conditions.Add($"v.valuevariant ->> '{key}' IN ({values})");
+              conditions.Add($@" exists (
+                select 1 
+                from jsonb_array_elements(view.variant) as elem
+                WHERE ((elem->'valuevariant')->>'{key}') IN ({values})
+            )");
           }
         }
       }
-
-      ///// phần trên đã xong nhưng chưa test
+      // nối where
       string wheresql = "";
       if (conditions.Any())
         wheresql = " where " + string.Join(" and ", conditions);
       // đếm số lượng sản phẩm
-      var sqlcountProduct = $"select count(distinct p.id) as \"Value\" {baseSql} {wheresql}"; // cần phải có tên cột là value
+      var sqlcountProduct = $"select count(distinct view.id) as \"Value\" {baseSql} {wheresql}"; // cần phải có tên cột là value
       // lấy sản phẩm 
-      var sqlData = $@"select distinct p.*
+      var sqlData = $@"select distinct view.*
       {baseSql}
       {wheresql}
-      order by p.id
+      order by view.id
       offset {(dTO.pageNumber - 1) * dTO.pageSize} rows 
       fetch next  {dTO.pageSize} rows only"; // rowns only
 
       // thực thi sql
       var totalCount = await _repoProduct.countProductBySql(sqlcountProduct); // đếm số lương sản phẩm
-      var productRaw = await _repoProduct.getProductBySql(sqlData); // lấy sản phẩm bằng sql
+      
+      var products = await _repoProduct.getProductBySql(sqlData); // lấy sản phẩm bằng sql
 
       // nếu không có sản phẩm nào
-      if (totalCount == 0 || !productRaw.Any())
+      if (totalCount == 0 || !products.Any())
       {
         return new PagedResultDTO<ProductFilterDTO>
         {
@@ -113,54 +106,6 @@ namespace be_dotnet_ecommerce1.Service
         };
       }
 
-      // convert dữ liệu sang dto cho giao diện
-
-      //var categoryIds = productRaw.Select(p => p.categoryId).Distinct().ToList();      // lấy ra id category
-      //var brandIds = productRaw.Select(p => p.brand_id).Distinct().ToList();
-      var productIds = productRaw.Select(p => p.id).Distinct().ToList(); // lấy ra id product từ product raw
-
-      var products = new List<ProductFilterDTO>(); // tạo danh sách trả về sản phẩm đã lọc
-      var discountTask = await _repoDiscount.getDiscountByIdProducts(productIds); // lấy task xử lý ở responstory
-      var ratingTask = await _repoReview.getSumRatingByIdsProduct(productIds);
-      var orderTask = await _repoReview.getSumQuantityReviewByIdProduct(productIds);
-      var categoryTask = await _repoCategory.getCategoryByProductIds(productIds);
-      var variantTask = await _repoVariant.getVariantByIdProducts(productIds);
-      var brandTask = await _repoBrand.getBrandByProductIds(productIds);
-
-      foreach (var p in productRaw)
-      {
-        discountTask.TryGetValue(p.id, out var discount);
-        ratingTask.TryGetValue(p.id, out var rating);
-        orderTask.TryGetValue(p.id, out var order);
-        var category = categoryTask.FirstOrDefault(c => c.id == p.categoryId);
-        var variant = variantTask.Where(v => v.productid == p.id).Distinct();
-        var brandui = brandTask.FirstOrDefault(b => b.id == p.brand_id);
-        products.Add(new ProductFilterDTO
-        {
-          id = p.id,
-          name = p.nameproduct,
-          description = p.description,
-          brand = brandui?.name?? "Unknown",
-          categoryId = p.categoryId,
-          //categoryName = p.Category.namecategory,
-          //categoryName = p.Category?.namecategory ?? "Unknown",
-          categoryName = category?.namecategory ?? "Unknown",
-          imgUrls = p.imageurls,
-          variant = variant.Select(v => new VariantDTO
-          {
-            id = v.id,
-            valuevariant = v.valuevariant,
-            stock = v.stock,
-            inputprice = v.inputprice,
-            price = v.price,
-            createdate = v.createdate,
-            updatedate = v.updatedate
-          }).ToArray(),
-          discount = discount,
-          rating = rating,
-          order = order
-        });
-      }
       var totalPage = (int)Math.Ceiling(totalCount / (double)dTO.pageSize);
       return new PagedResultDTO<ProductFilterDTO>
       {

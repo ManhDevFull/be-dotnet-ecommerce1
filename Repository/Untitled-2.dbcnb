@@ -43,7 +43,7 @@ cells:
 
       \            jsonb_build_object(\r
 
-      \                'variant_id', v2.id,\r
+      \                'id', v2.id,\r
 
       \                'valuevariant', v2.valuevariant,\r
 
@@ -59,15 +59,15 @@ cells:
 
       \                            jsonb_build_object(\r
 
-      \                                'discount_id', d.id,\r
+      \                                'id', d.id,\r
 
       \                                'typediscount', d.typediscount,\r
 
       \                                'discount', d.discount,\r
 
-      \                                'startTime', d.starttime,\r
+      \                                'starttime', d.starttime,\r
 
-      \                                'endTime', d.endtime\r
+      \                                'endtime', d.endtime\r
 
       \                            )\r
 
@@ -99,21 +99,25 @@ cells:
 
       SELECT\r
 
-      \    p.id as idproduct,\r
+      \    p.id,\r
 
-      \    p.nameproduct,\r
+      \    p.description,\r
 
-      \    c.id AS category_id,\r
+      \    p.imageurls as imgUrls,\r
 
-      \    c.namecategory,\r
+      \    p.nameproduct as name,\r
 
-      \    b.name AS brand_name,\r
+      \    c.id AS categoryId,\r
 
-      \    COALESCE(va.variants, '[]'::jsonb) AS variants,\r
+      \    c.namecategory as categoryName,\r
 
-      \    COALESCE(rs.sum_rating, 0) AS sum_ratingOrder,\r
+      \    b.name AS brand,\r
 
-      \    COALESCE(rs.count_review, 0) AS count_orderReview\r
+      \    COALESCE(va.variants, '[]'::jsonb) AS variant,\r
+
+      \    COALESCE(rs.sum_rating, 0) AS rating,\r
+
+      \    COALESCE(rs.count_review, 0) AS order\r
 
       FROM product p\r
 
@@ -131,7 +135,7 @@ cells:
 
       \r
 
-      SELECT * FROM v_products_filter ;\r
+      SELECT * FROM v_products_filter view ;\r
 
       select * FROM review \r
 
@@ -279,9 +283,53 @@ cells:
 
       \r
 
+      [\r
+
       \r
 
-      \r\n"
+      \  {\r
+
+      \    \"price\": 78235,\r
+
+      \    \"stock\": 22,\r
+
+      \    \"discounts\": [],\r
+
+      \    \"variant_id\": 41,\r
+
+      \    \"valuevariant\": {\r
+
+      \      \"color\": \"blue\",\r
+
+      \      \"storage\": \"256GB\"\r
+
+      \    }\r
+
+      \  },\r
+
+      \  {\r
+
+      \    \"price\": 84300,\r
+
+      \    \"stock\": 31,\r
+
+      \    \"discounts\": [],\r
+
+      \    \"variant_id\": 4261,\r
+
+      \    \"valuevariant\": {\r
+
+      \      \"color\": \"blue\",\r
+
+      \      \"storage\": \"256GB\"\r
+
+      \    }\r
+
+      \  }\r
+
+      ]\r
+
+      SELECT * from v_variant_filters\r\n"
     metadata: {}
 metadata:
   conn:
