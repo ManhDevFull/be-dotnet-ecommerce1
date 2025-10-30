@@ -13,5 +13,7 @@ namespace dotnet.Service.IService
     Task<Account?> GetUserProfileByIdAsync(int userId);
     Task<Account?> UpdateProfileAsync(int userId, UserProfileUpdateDTO dto);
     Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword);
+
+    Task<bool> UpdateAvatarUrlAsync(int userId, string avatarUrl);
   }
 }

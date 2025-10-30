@@ -61,8 +61,6 @@ namespace dotnet.Service
             {
                 user.refreshtokenexpires = DateTime.SpecifyKind(user.refreshtokenexpires.Value, DateTimeKind.Utc);
             }
-  
-
             _repo.Update(user);
 
             try 
@@ -121,5 +119,29 @@ namespace dotnet.Service
                 throw;
             }
         }
+
+        public async Task<bool> UpdateAvatarUrlAsync(int userId, string avatarUrl)
+        {
+            var user = await _repo.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.avatarimg = avatarUrl; 
+            user.updatedate = DateTime.UtcNow; 
+
+            if (user.createdate.HasValue && user.createdate.Value.Kind == DateTimeKind.Unspecified)
+                user.createdate = DateTime.SpecifyKind(user.createdate.Value, DateTimeKind.Utc);
+            if (user.bod.HasValue && user.bod.Value.Kind == DateTimeKind.Unspecified)
+                user.bod = DateTime.SpecifyKind(user.bod.Value, DateTimeKind.Utc);
+            if (user.refreshtokenexpires.HasValue && user.refreshtokenexpires.Value.Kind == DateTimeKind.Unspecified)
+                user.refreshtokenexpires = DateTime.SpecifyKind(user.refreshtokenexpires.Value, DateTimeKind.Utc);
+
+            _repo.Update(user); 
+            await _repo.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

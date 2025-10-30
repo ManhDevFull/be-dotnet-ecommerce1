@@ -17,6 +17,7 @@ using dotnet.Repository;
 using be_dotnet_ecommerce1.Service;
 using be_dotnet_ecommerce1.Repository.IRepository;
 using be.Service.IService;
+using be_dotnet_ecommerce1.Dtos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,11 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IVariantRepository, VariantRepository>();
 builder.Services.AddScoped<IVariantService, VariantService>();
 builder.Services.AddScoped<IProductReponsitory, ProductReponsitory>();
+
+// 1. Đọc "Cloudinary" từ appsettings.json và map vào class CloudinarySettings
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+// 2. Đăng ký IPhotoService
+builder.Services.AddScoped<IPhotoService, PhotoService>();
 
 
 builder.Services.AddControllers();

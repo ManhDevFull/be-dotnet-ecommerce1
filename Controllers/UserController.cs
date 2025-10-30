@@ -5,6 +5,7 @@ using System.Security.Claims;
 using dotnet.Service.IService;
 using be_dotnet_ecommerce1.Dtos;
 using Microsoft.Extensions.Logging;
+using be.Service.IService;
 namespace dotnet.Controllers
 {
   [ApiController]
@@ -22,11 +23,14 @@ namespace dotnet.Controllers
     private readonly IUserService _userService;
     private readonly ILogger<UserController> _logger;
 
+    private readonly IPhotoService _photoService;
+
     // ✅ Sửa Constructor để nhận IUserService
-    public UserController(IUserService userService, ILogger<UserController> logger)
+    public UserController(IUserService userService, ILogger<UserController> logger, IPhotoService photoService)
     {
       _userService = userService;
       _logger = logger;
+      _photoService = photoService;
     }
 
     [AllowAnonymous]
@@ -158,5 +162,57 @@ namespace dotnet.Controllers
       }
     }
 
+    [HttpPut("profile/avatar")]
+    [HttpPost("avatar")]
+    [Authorize] // Yêu cầu đăng nhập
+    public async Task<IActionResult> UploadAvatar(IFormFile file)
+    {
+      // Lấy userId từ token
+      var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+      if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out var userId))
+      {
+        return Unauthorized("Không thể xác định người dùng.");
+      }
+
+      // 1. Gửi file lên Cloudinary
+      var uploadResult = await _photoService.AddPhotoAsync(file);
+
+      // 2. Kiểm tra lỗi từ Cloudinary
+      if (uploadResult.Error != null)
+      {
+        _logger.LogError("Lỗi upload Cloudinary: {Message}", uploadResult.Error.Message);
+        return BadRequest(new { message = $"Lỗi upload ảnh: {uploadResult.Error.Message}" });
+      }
+
+      // 3. Lấy URL trả về
+      string imageUrl = uploadResult.SecureUrl.ToString();
+
+      // 4. Lấy PublicId (nếu bạn muốn lưu để sau này xóa)
+      // string publicId = uploadResult.PublicId;
+
+      try
+      {
+        // 5. Lưu URL vào database
+        var success = await _userService.UpdateAvatarUrlAsync(userId, imageUrl);
+        if (!success)
+        {
+          return NotFound(new { message = "Không tìm thấy người dùng để cập nhật ảnh." });
+        }
+
+        // 6. Trả về URL mới cho frontend
+        return Ok(new
+        {
+          message = "Cập nhật avatar thành công.",
+          avatarUrl = imageUrl
+        });
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Lỗi khi lưu URL avatar vào DB cho User ID {UserId}", userId);
+        // (Tùy chọn) Nếu lưu DB lỗi, nên xóa ảnh vừa upload lên Cloudinary
+        // await _photoService.DeletePhotoAsync(uploadResult.PublicId);
+        return StatusCode(500, new { message = "Lỗi server khi lưu ảnh." });
+      }
+    }
   }
 }
