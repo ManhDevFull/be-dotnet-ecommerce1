@@ -10,8 +10,7 @@ namespace be_dotnet_ecommerce1.Dtos
         public string? categoryName { get; set; }
         public List<string>? imgUrls { get; set; }
         //public int totalStock { get; set; }
-       // public List<String>? variant { get; set; }
-       public string? variant { get; set; }
+        public string? variant { get; set; }
         public int rating { get; set; }
         public int order { get; set; }
     }

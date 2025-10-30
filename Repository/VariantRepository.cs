@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Text.Json;
 using be_dotnet_ecommerce1.Controllers;
 using be_dotnet_ecommerce1.Data;
 using be_dotnet_ecommerce1.Dtos;
+using be_dotnet_ecommerce1.Model;
 using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -75,6 +77,26 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
             var data = await _connect.Database.SqlQueryRaw<VariantFilterDTO>(@"SELECT * from v_variant_filters").ToListAsync();
             return data;
         }
+
+        public async Task<List<VariantFilterDTO>> GetValueVariantByNameCategory(string name)
+        {
+            var sql = $@"select * from v_varaintbycategory";
+            if(name != null)
+                sql += " WHERE namecategory = '{name}'";
+            var dataRow = await _connect.Set<V_variant>()
+            .FromSqlRaw(sql)
+            .ToListAsync();
+            var rs = dataRow.Select(r=> new VariantFilterDTO{
+                id = r.id,
+                namecategory = r.namecategory,
+                brand = r.brand,
+                variant = string.IsNullOrEmpty(r.variant) ? null
+                 : JsonSerializer.Deserialize<Dictionary<string, string[]>>(r.variant)
+            }).ToList();
+            return rs;
+        }
+
+
         public async Task<List<Variant>> GetVariantByFilter(FilterDTO dTO) // done
         {
             var sql = "select * from variant";

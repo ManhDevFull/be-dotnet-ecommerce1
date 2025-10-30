@@ -12,26 +12,10 @@ namespace be_dotnet_ecommerce1.Service
   public class ProductService : IProductService
   {
     private readonly IProductRepository _repoProduct;
-    private readonly IVariantRepository _repoVariant;
-    private readonly ICategoryRepository _repoCategory;
-    private readonly IReviewRepository _repoReview;
-    private readonly IDiscountRepository _repoDiscount;
-    private readonly IBrandRepository _repoBrand;
 
-    public ProductService(IProductRepository repoProduct,
-        IVariantRepository repoVariant,
-        ICategoryRepository repoCategory,
-        IReviewRepository repoReview,
-        IDiscountRepository repoDiscount,
-        IBrandRepository repoBrand
-    )
+    public ProductService(IProductRepository repoProduct)
     {
       _repoProduct = repoProduct;
-      _repoVariant = repoVariant;
-      _repoCategory = repoCategory;
-      _repoReview = repoReview;
-      _repoDiscount = repoDiscount;
-      _repoBrand = repoBrand;
     }
 
     public async Task<PagedResultDTO<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)

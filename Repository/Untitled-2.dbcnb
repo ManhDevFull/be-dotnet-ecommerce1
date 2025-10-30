@@ -285,17 +285,87 @@ cells:
 
       [\r
 
-      \r
+      \  {\r
+
+      \    \"id\": 1,\r
+
+      \    \"price\": 25000,\r
+
+      \    \"stock\": 10,\r
+
+      \    \"discounts\": [\r
+
+      \      {\r
+
+      \        \"id\": 1,\r
+
+      \        \"endtime\": \"2025-10-25T02:54:57.36542\",\r
+
+      \        \"discount\": 10,\r
+
+      \        \"starttime\": \"2025-09-25T02:54:57.36542\",\r
+
+      \        \"typediscount\": 1\r
+
+      \      }\r
+
+      \    ],\r
+
+      \    \"valuevariant\": {\r
+
+      \      \"color\": \"black\",\r
+
+      \      \"storage\": \"128GB\"\r
+
+      \    }\r
+
+      \  },\r
 
       \  {\r
+
+      \    \"id\": 2,\r
+
+      \    \"price\": 30000,\r
+
+      \    \"stock\": 8,\r
+
+      \    \"discounts\": [\r
+
+      \      {\r
+
+      \        \"id\": 1,\r
+
+      \        \"endtime\": \"2025-10-25T02:54:57.36542\",\r
+
+      \        \"discount\": 10,\r
+
+      \        \"starttime\": \"2025-09-25T02:54:57.36542\",\r
+
+      \        \"typediscount\": 1\r
+
+      \      }\r
+
+      \    ],\r
+
+      \    \"valuevariant\": {\r
+
+      \      \"color\": \"white\",\r
+
+      \      \"storage\": \"256GB\"\r
+
+      \    }\r
+
+      \  },\r
+
+      \  {\r
+
+      \    \"id\": 41,\r
 
       \    \"price\": 78235,\r
 
       \    \"stock\": 22,\r
 
       \    \"discounts\": [],\r
-
-      \    \"variant_id\": 41,\r
 
       \    \"valuevariant\": {\r
 
@@ -309,13 +379,13 @@ cells:
 
       \  {\r
 
+      \    \"id\": 4261,\r
+
       \    \"price\": 84300,\r
 
       \    \"stock\": 31,\r
 
       \    \"discounts\": [],\r
-
-      \    \"variant_id\": 4261,\r
 
       \    \"valuevariant\": {\r
 
@@ -329,7 +399,7 @@ cells:
 
       ]\r
 
-      SELECT * from v_variant_filters\r\n"
+      SELECT * from v_variant_filters WHERE cate\r\n"
     metadata: {}
 metadata:
   conn:

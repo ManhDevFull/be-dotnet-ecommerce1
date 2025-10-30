@@ -14,11 +14,16 @@ namespace be_dotnet_ecommerce1.Controllers
         {
             _service = service;
         }
+        // [HttpGet]
+        // public async Task<IActionResult> getValueVariant()
+        // {
+        //     var list = await _service.getValueVariant();
+        //     return Ok(list);
+        // }
         [HttpGet]
-        public async Task<IActionResult> getValueVariant()
-        {
-            var list = await _service.getValueVariant();
-            return Ok(list);
+        public async Task<IActionResult> getValueVarianByCategory(string name){
+            var rs = await _service.getValueVariantByNameCategory(name);
+            return Ok(rs);
         }
     }
 }

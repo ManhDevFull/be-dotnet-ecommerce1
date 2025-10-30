@@ -19,6 +19,11 @@ namespace be_dotnet_ecommerce1.Service
             return await _repo.GetValueVariant();
         }
 
+        public async Task<List<VariantFilterDTO>> getValueVariantByNameCategory(string name)
+        {
+            var rs = await _repo.GetValueVariantByNameCategory(name);
+            return rs;
+        }
 
         public async Task<List<Variant>> GetVariantByFilter(FilterDTO dTO)
         {
