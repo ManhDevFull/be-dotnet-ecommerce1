@@ -1,6 +1,9 @@
+using System.Linq;
+using System.Threading.Tasks;
 using be_dotnet_ecommerce1.Dtos;
 using be_dotnet_ecommerce1.Model;
 using be_dotnet_ecommerce1.Repository.IReopsitory;
+using dotnet.Dtos.admin;
 
 namespace be_dotnet_ecommerce1.Service.IService
 {
@@ -29,6 +32,18 @@ namespace be_dotnet_ecommerce1.Service.IService
     {
       var list = _repo.getBrandByCate(categoryId);
       return list;
+    }
+    public Task<CategoryAdminDTO> CreateCategoryAsync(CategoryCreateRequest request)
+    {
+      return _repo.CreateCategoryAsync(request);
+    }
+    public Task<CategoryAdminDTO?> UpdateCategoryAsync(int categoryId, CategoryUpdateRequest request)
+    {
+      return _repo.UpdateCategoryAsync(categoryId, request);
+    }
+    public Task<bool> DeleteCategoryAsync(int categoryId)
+    {
+      return _repo.DeleteCategoryAsync(categoryId);
     }
   }
 }

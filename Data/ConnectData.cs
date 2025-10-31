@@ -80,6 +80,7 @@ GROUP BY
     public DbSet<ShoppingCart> shoppingCarts { get; set; }
     public DbSet<Variant> variants { get; set; }
     public DbSet<WishList> wishLists { get; set; }
+    public DbSet<EmailVerification> emailVerifications { get; set; }
 
     // DTO / Views
     public DbSet<CategoryAdminDTO> categoryAdmins { get; set; }
@@ -105,6 +106,23 @@ GROUP BY
         e.Property(x => x.isdeleted).HasColumnName("isdeleted");
         e.Property(x => x.refreshtoken).HasColumnName("refreshtoken");
         e.Property(x => x.refreshtokenexpires).HasColumnName("refreshtokenexpires");
+      });
+      // -------- email_verification --------
+      modelBuilder.Entity<EmailVerification>(e =>
+      {
+        e.ToTable("email_verification");
+        e.HasKey(x => x.id);
+        e.HasIndex(x => x.email).IsUnique();
+        e.Property(x => x.email).HasColumnName("email");
+        e.Property(x => x.codehash).HasColumnName("codehash");
+        e.Property(x => x.passwordhash).HasColumnName("passwordhash");
+        e.Property(x => x.firstname).HasColumnName("firstname");
+        e.Property(x => x.lastname).HasColumnName("lastname");
+        e.Property(x => x.expiresat).HasColumnName("expiresat");
+        e.Property(x => x.createdat).HasColumnName("createdat");
+        e.Property(x => x.updatedat).HasColumnName("updatedat");
+        e.Property(x => x.attemptcount).HasColumnName("attemptcount");
+        e.Property(x => x.lastsentat).HasColumnName("lastsentat");
       });
 
       // -------- address --------

@@ -12,7 +12,7 @@ namespace dotnet.Dtos
     public DateTime product_created { get; set; }
     public DateTime product_updated { get; set; }
     public long total_stock { get; set; }
-    public List<ValueVariant> variants { get; set; }
+    public List<ValueVariant> variants { get; set; } = new();
 
     public class ValueVariant
     {
