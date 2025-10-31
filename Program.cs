@@ -39,6 +39,8 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IVariantRepository, VariantRepository>();
 builder.Services.AddScoped<IVariantService, VariantService>();
 builder.Services.AddScoped<IProductReponsitory, ProductReponsitory>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 // 1. Đọc "Cloudinary" từ appsettings.json và map vào class CloudinarySettings
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));

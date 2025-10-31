@@ -31,7 +31,6 @@ namespace be_dotnet_ecommerce1.Service
                 var uploadParams = new ImageUploadParams
                 {
                     File = new FileDescription(file.FileName, stream),
-                    // Tùy chọn: Tự động cắt ảnh thành 150x150, bo tròn, làm mờ
                     Transformation = new Transformation()
                         .Height(150).Width(150).Crop("fill").Gravity("face")
                 };

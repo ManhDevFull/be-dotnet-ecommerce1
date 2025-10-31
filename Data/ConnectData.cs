@@ -26,6 +26,8 @@ namespace be_dotnet_ecommerce1.Data
     public DbSet<WishList> wishLists { get; set; }
     public DbSet<CategoryAdmin> categoryAdmins { get; set; }
     public DbSet<UserDTO> userDTOAdmins { get; set; }
+
+    public DbSet<OrderHistoryDTO> OrderHistory { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       //account
@@ -206,8 +208,9 @@ namespace be_dotnet_ecommerce1.Data
 
       modelBuilder.Entity<CategoryAdmin>().HasNoKey().ToView(null);
       modelBuilder.Entity<UserDTO>().HasNoKey().ToView(null);
-
+      modelBuilder.Entity<OrderHistoryDTO>().HasNoKey().ToView(null);
       base.OnModelCreating(modelBuilder);
     }
+
   }
 }
