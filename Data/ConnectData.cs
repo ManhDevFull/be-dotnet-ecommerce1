@@ -1,5 +1,4 @@
-using be_dotnet_ecommerce1.Model;      // nếu bạn có DTO ở namespace này
-using dotnet.Dtos;
+using be_dotnet_ecommerce1.Model;
 using dotnet.Dtos.admin;
 using dotnet.Model;
 using Microsoft.EntityFrameworkCore;

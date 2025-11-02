@@ -196,10 +196,16 @@ namespace dotnet.Controllers
         };
         Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
 
+        var displayName = string.Join(" ", new[] { user.firstname, user.lastname }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        if (string.IsNullOrWhiteSpace(displayName))
+          displayName = name ?? string.Empty;
+
+        var displayAvatar = string.IsNullOrWhiteSpace(user.avatarimg) ? avatarUrl : user.avatarimg;
+
         return Ok(new
         {
           status = 200,
-          data = new { accessToken, user = new { id = user.id, name, avatarUrl, email, rule = user.role } }
+          data = new { accessToken, user = new { id = user.id, name = displayName, avatarUrl = displayAvatar, email, rule = user.role } }
         });
       }
       catch (Exception ex)
