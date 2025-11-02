@@ -1,8 +1,8 @@
-using dotnet.Dtos;
+using dotnet.Dtos.admin;
 namespace dotnet.Repository.IRepository
 {
     public interface IUserReponsitory
     {
-    public List<UserDTO> getUserAdmin();
+    public List<UserAdminDTO> getUserAdmin();
   }
 }

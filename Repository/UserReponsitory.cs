@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using be_dotnet_ecommerce1.Data;
-using dotnet.Dtos;
+using dotnet.Dtos.admin;
 using dotnet.Repository.IRepository;
 
 namespace dotnet.Repository
@@ -12,7 +12,7 @@ namespace dotnet.Repository
     {
       _connect = connect;
     }
-public List<UserDTO> getUserAdmin()
+public List<UserAdminDTO> getUserAdmin()
 {
     var sql = @"
         SELECT 
@@ -32,7 +32,7 @@ public List<UserDTO> getUserAdmin()
         ORDER BY a.id;
     ";
 
-    var list = _connect.Set<UserDTO>().FromSqlRaw(sql).AsNoTracking().ToList();
+    var list = _connect.Set<UserAdminDTO>().FromSqlRaw(sql).AsNoTracking().ToList();
     return list;
 }
 

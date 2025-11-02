@@ -1,13 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using be_dotnet_ecommerce1.Model;
-
-namespace dotnet.Model
+namespace dotnet.Model;
+public class Order
 {
-  public class Order
-  {
     public int id { get; set; }
     public int accountid { get; set; }
     public int variantid { get; set; }
@@ -18,9 +11,9 @@ namespace dotnet.Model
     public DateTime? receivedate { get; set; }
     public string? typepay { get; set; }
     public string? statuspay { get; set; }
-    public Account? account { get; set; }
-    public Variant? variant { get; set; }
-    public Address? address { get; set; }
+
+    public Account account { get; set; } = null!;
+    public Variant variant { get; set; } = null!;
+    public Address address { get; set; } = null!;
     public Review? review { get; set; }
-  }
 }

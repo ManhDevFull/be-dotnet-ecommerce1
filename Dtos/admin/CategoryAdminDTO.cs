@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 namespace be_dotnet_ecommerce1.Model
 {
   [Keyless]
-  public class CategoryAdmin
+  public class CategoryAdminDTO
   {
     public int id { get; set; }
     public string namecategory { get; set; } = null!;

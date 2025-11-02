@@ -38,6 +38,10 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IVariantRepository, VariantRepository>();
 builder.Services.AddScoped<IVariantService, VariantService>();
 builder.Services.AddScoped<IProductReponsitory, ProductReponsitory>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderRepository,OrderRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IReviewRepository,ReviewRepository>();
 
 
 builder.Services.AddControllers();

@@ -5,6 +5,7 @@ using be_dotnet_ecommerce1.Controllers;
 using be_dotnet_ecommerce1.Dtos;
 using be_dotnet_ecommerce1.Service.IService;
 using be.Service.IService;
+using dotnet.Dtos.admin;
 
 namespace dotnet.Service
 {
@@ -15,15 +16,22 @@ namespace dotnet.Service
     {
       _repo = repo;
     }
-    public List<ProductDTO> getProductAdmin(int page, int size)
+    public async Task<PagedResult<ProductAdminDTO>> getProductAdmin(
+        int page,
+        int size,
+        string? name,
+        int? cate,
+        string? brand,
+        bool? stock,
+        string sort = "newest")
     {
-      var list = _repo.getProductAdmin(page, size);
-      return list;
+      var paged = await _repo.getProductAdmin(page, size, name, cate, brand, stock, sort);
+      return paged;
     }
 
     public async Task<List<ProductFilterDTO>> getProductByFilter(FilterDTO dTO)
     {
-      var result = await _repo.getProductByFilter(dTO);
+      var result = await _repo.GetProductByFilter(dTO);
       return result;
     }
 
@@ -33,6 +41,35 @@ namespace dotnet.Service
       var quantity = _repo.getQuantityByIdCategory(id);
       return quantity;
     }
+
+    public Task<ProductAdminDTO?> CreateProductAsync(ProductAdminCreateRequest request)
+    {
+      return _repo.CreateProductAsync(request);
+    }
+
+    public Task<ProductAdminDTO?> UpdateProductAsync(int productId, ProductAdminUpdateRequest request)
+    {
+      return _repo.UpdateProductAsync(productId, request);
+    }
+
+    public Task<bool> DeleteProductAsync(int productId)
+    {
+      return _repo.DeleteProductAsync(productId);
+    }
+
+    public Task<ProductAdminDTO?> CreateVariantAsync(int productId, VariantAdminCreateRequest request)
+    {
+      return _repo.CreateVariantAsync(productId, request);
+    }
+
+    public Task<ProductAdminDTO?> UpdateVariantAsync(int productId, int variantId, VariantAdminUpdateRequest request)
+    {
+      return _repo.UpdateVariantAsync(productId, variantId, request);
+    }
+
+    public Task<ProductAdminDTO?> DeleteVariantAsync(int productId, int variantId)
+    {
+      return _repo.DeleteVariantAsync(productId, variantId);
+    }
   }
 }
-
