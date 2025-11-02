@@ -8,17 +8,16 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using FirebaseAdmin.Auth;
 using Microsoft.EntityFrameworkCore;
-using dotnet.Service.Email;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Logging;
 using System.Net.Mail;
 using System.Net;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Net.Http.Json; // NEW CODE: use HttpClient extensions for JSON payloads
+using System.Text.Json; // NEW CODE: parse Verify service responses
 
 namespace dotnet.Controllers
 {
@@ -30,8 +29,6 @@ namespace dotnet.Controllers
     private readonly ConnectData _db; // NEW
     private readonly IConfiguration _config;
     private readonly HttpClient _http;
-    private readonly IEmailService _emailService;
-    private readonly EmailSettings _emailSettings;
     private readonly ILogger<AuthController> _logger;
 
     // OLD:
@@ -47,224 +44,14 @@ namespace dotnet.Controllers
       ConnectData db,
       IConfiguration config,
       IHttpClientFactory httpClientFactory,
-      IEmailService emailService,
-      IOptions<EmailSettings> emailOptions,
       ILogger<AuthController> logger)
     {
       _db = db;
       _config = config;
       _http = httpClientFactory.CreateClient();
-      _emailService = emailService;
-      _emailSettings = emailOptions.Value;
       _logger = logger;
     }
 
-    [HttpPost("request-verification")]
-    [AllowAnonymous]
-    public async Task<IActionResult> RequestEmailVerification([FromBody] RegisterRequest dto, CancellationToken cancellationToken)
-    {
-      try
-      {
-        var email = dto.Email?.Trim().ToLowerInvariant();
-        var password = dto.Password?.Trim();
-        var fullName = dto.FullName?.Trim();
-
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(fullName))
-        {
-          return BadRequest(new { message = "Email, password and full name are required." });
-        }
-
-        if (!IsValidEmail(email))
-        {
-          return BadRequest(new { message = "Invalid email address." });
-        }
-
-        if (password.Length < 6)
-        {
-          return BadRequest(new { message = "Password must be at least 6 characters long." });
-        }
-
-        var existingAccount = await _db.accounts.AnyAsync(u => u.email == email, cancellationToken);
-        if (existingAccount)
-        {
-          return Conflict(new { message = "Email is already registered. Please sign in instead." });
-        }
-
-        var now = DateTime.UtcNow;
-        var verification = await _db.emailVerifications.FirstOrDefaultAsync(v => v.email == email, cancellationToken);
-
-        if (verification == null)
-        {
-          verification = new EmailVerification
-          {
-            email = email,
-            createdat = now
-          };
-          await _db.emailVerifications.AddAsync(verification, cancellationToken);
-        }
-        else
-        {
-          var cooldownSeconds = Math.Max(0, _emailSettings.ResendCooldownSeconds);
-          if (verification.lastsentat.HasValue && cooldownSeconds > 0)
-          {
-            var secondsSinceLast = (int)Math.Floor((now - verification.lastsentat.Value).TotalSeconds);
-            if (secondsSinceLast < cooldownSeconds)
-            {
-              var waitSeconds = Math.Max(0, cooldownSeconds - secondsSinceLast);
-              return StatusCode(StatusCodes.Status429TooManyRequests, new
-              {
-                message = $"Please wait {waitSeconds} second(s) before requesting another code.",
-                retryAfter = waitSeconds
-              });
-            }
-          }
-        }
-
-        var code = GenerateVerificationCode();
-        var hashedCode = BCrypt.Net.BCrypt.HashPassword(code);
-        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
-        var (firstName, lastName) = SplitFullName(fullName);
-
-        verification.codehash = hashedCode;
-        verification.passwordhash = hashedPassword;
-        verification.firstname = string.IsNullOrWhiteSpace(firstName) ? null : firstName;
-        verification.lastname = string.IsNullOrWhiteSpace(lastName) ? null : lastName;
-        verification.expiresat = now.AddMinutes(Math.Max(1, _emailSettings.CodeExpiryMinutes));
-        verification.attemptcount = 0;
-        verification.updatedat = now;
-        verification.lastsentat = now;
-
-        await _db.SaveChangesAsync(cancellationToken);
-
-        var subject = "Verify your email address";
-        var body = BuildVerificationEmailBody(fullName!, code, _emailSettings.CodeExpiryMinutes);
-        await _emailService.SendAsync(email, subject, body, cancellationToken);
-
-        return Ok(new { status = 200, message = "Verification code sent to your email." });
-      }
-      catch (Exception ex)
-      {
-        _logger.LogError(ex, "Failed to request email verification for {Email}", dto?.Email);
-        return StatusCode(500, new { message = "Failed to send verification code." });
-      }
-    }
-
-    [HttpPost("verify-email")]
-    [AllowAnonymous]
-    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest dto, CancellationToken cancellationToken)
-    {
-      try
-      {
-        var email = dto.Email?.Trim().ToLowerInvariant();
-        var code = dto.Code?.Trim();
-
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(code))
-        {
-          return BadRequest(new { message = "Email and verification code are required." });
-        }
-
-        var verification = await _db.emailVerifications.FirstOrDefaultAsync(v => v.email == email, cancellationToken);
-        if (verification == null)
-        {
-          return BadRequest(new { message = "Verification session not found. Please request a new code." });
-        }
-
-        if (verification.expiresat < DateTime.UtcNow)
-        {
-          return BadRequest(new { message = "Verification code expired. Please request a new code." });
-        }
-
-        var maxAttempts = Math.Max(1, _emailSettings.MaxAttempts);
-        if (verification.attemptcount >= maxAttempts)
-        {
-          return StatusCode(StatusCodes.Status423Locked, new { message = "Too many invalid attempts. Please request a new verification code." });
-        }
-
-        if (!BCrypt.Net.BCrypt.Verify(code, verification.codehash))
-        {
-          verification.attemptcount += 1;
-          await _db.SaveChangesAsync(cancellationToken);
-          var attemptsLeft = Math.Max(0, maxAttempts - verification.attemptcount);
-          return BadRequest(new
-          {
-            message = attemptsLeft > 0
-              ? $"Invalid verification code. {attemptsLeft} attempt(s) remaining."
-              : "Invalid verification code."
-          });
-        }
-
-        var existingAccount = await _db.accounts.FirstOrDefaultAsync(u => u.email == email, cancellationToken);
-        if (existingAccount != null)
-        {
-          _db.emailVerifications.Remove(verification);
-          await _db.SaveChangesAsync(cancellationToken);
-          return Conflict(new { message = "Email already registered. Please sign in instead." });
-        }
-
-        var account = new Account
-        {
-          email = email,
-          firstname = verification.firstname,
-          lastname = verification.lastname,
-          password = verification.passwordhash,
-          role = 3,
-          createdate = DateTime.UtcNow,
-          updatedate = DateTime.UtcNow
-        };
-
-        var refreshToken = GenerateRefreshToken();
-        account.refreshtoken = refreshToken;
-        account.refreshtokenexpires = DateTime.UtcNow.AddDays(7);
-
-        _db.accounts.Add(account);
-        _db.emailVerifications.Remove(verification);
-        await _db.SaveChangesAsync(cancellationToken);
-
-        var accessToken = GenerateJwtToken(account.id.ToString(), account.email ?? string.Empty, account.role.ToString());
-
-        var accessCookieOptions = new CookieOptions
-        {
-          HttpOnly = true,
-          Secure = false,
-          SameSite = SameSiteMode.Lax,
-          Expires = DateTimeOffset.UtcNow.AddMinutes(15),
-          Path = "/"
-        };
-        Response.Cookies.Append("accessToken", accessToken, accessCookieOptions);
-
-        var refreshCookieOptions = new CookieOptions
-        {
-          HttpOnly = true,
-          Secure = false,
-          SameSite = SameSiteMode.Lax,
-          Expires = DateTimeOffset.UtcNow.AddDays(7),
-          Path = "/"
-        };
-        Response.Cookies.Append("refreshToken", refreshToken, refreshCookieOptions);
-
-        return Ok(new
-        {
-          status = 200,
-          data = new
-          {
-            accessToken,
-            user = new
-            {
-              id = account.id,
-              name = $"{account.firstname} {account.lastname}".Trim(),
-              email = account.email,
-              avatarUrl = account.avatarimg,
-              rule = account.role
-            }
-          }
-        });
-      }
-      catch (Exception ex)
-      {
-        _logger.LogError(ex, "Failed to verify email for {Email}", dto?.Email);
-        return StatusCode(500, new { message = "Failed to verify email." });
-      }
-    }
 
     [HttpPost("login")]
     [AllowAnonymous]
@@ -366,7 +153,6 @@ namespace dotnet.Controllers
         return BadRequest(new { message = "Missing Firebase IdToken" });
       try
       {
-        // Verify với Firebase
         var decoded = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(dto.IdToken);
 
         var uid = decoded.Uid;
@@ -374,12 +160,6 @@ namespace dotnet.Controllers
         var name = decoded.Claims.ContainsKey("name") ? decoded.Claims["name"]?.ToString() : null;
         var avatarUrl = decoded.Claims.ContainsKey("picture") ? decoded.Claims["picture"]?.ToString() : null;
 
-        // OLD: query tay
-        // await using var conn = await _dataSource.OpenConnectionAsync();
-        // int userId;
-        // string rule;
-
-        // NEW: EF Core
         var user = await _db.accounts.FirstOrDefaultAsync(u => u.email == email);
         if (user == null)
         {
@@ -474,6 +254,227 @@ namespace dotnet.Controllers
       {
         return StatusCode(500, new { error = ex.Message });
       }
+    }
+
+    // NEW CODE: proxy Verify service to request an OTP for user registration
+    [HttpPost("register/send-otp")]
+    [AllowAnonymous]
+    public async Task<IActionResult> SendRegistrationOtp([FromBody] RegisterRequest dto)
+    {
+      var cancellationToken = HttpContext.RequestAborted;
+      if (dto == null)
+        return BadRequest(new { message = "Request body is required." });
+
+      var email = (dto.Email ?? string.Empty).Trim().ToLowerInvariant();
+      var password = dto.Password ?? string.Empty;
+      var fullName = (dto.FullName ?? string.Empty).Trim();
+
+      if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(fullName))
+        return BadRequest(new { message = "Email, password and full name are required." });
+
+      if (!IsValidEmail(email))
+        return BadRequest(new { message = "Invalid email format." });
+
+      var alreadyExists = await _db.accounts.AnyAsync(a => a.email == email, cancellationToken);
+      if (alreadyExists)
+        return Conflict(new { message = "Email already registered." });
+
+      var baseUrl = GetVerifyServiceBaseUrl();
+      if (string.IsNullOrEmpty(baseUrl))
+      {
+        _logger.LogError("Verify service base URL is not configured.");
+        return StatusCode(500, new { message = "OTP service is not configured." });
+      }
+_logger.LogInformation("Verify baseUrl = `{BaseUrl}`", baseUrl);
+
+      try
+      {
+        var response = await _http.PostAsJsonAsync($"{baseUrl}/otp/send", new { email }, cancellationToken);
+        var rawBody = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+          var errorMessage = ExtractProblemDetail(rawBody) ?? "Failed to send OTP.";
+          _logger.LogWarning("Verify service send OTP failure ({Status}): {Detail}", response.StatusCode, errorMessage);
+          return StatusCode((int)response.StatusCode, new { message = errorMessage });
+        }
+
+        VerifyServiceSendResponse? payload = null;
+        try
+        {
+          payload = JsonSerializer.Deserialize<VerifyServiceSendResponse>(rawBody, VerifyJsonOptions);
+        }
+        catch (JsonException jsonEx)
+        {
+          _logger.LogWarning(jsonEx, "Failed to parse Verify service send response for {Email}.", email);
+        }
+
+        return Ok(new
+        {
+          status = 200,
+          message = "Verification code sent successfully.",
+          data = new
+          {
+            email,
+            expiresAt = payload?.ExpiresAt
+          }
+        });
+      }
+      catch (Exception ex) when (ex is not OperationCanceledException)
+      {
+        _logger.LogError(ex, "Unexpected error while sending OTP for {Email}", email);
+        return StatusCode(500, new
+        {
+          message = "Unexpected error while sending OTP.",
+          detail = ex.Message
+        });
+      }
+    }
+
+    // NEW CODE: verify OTP with Verify service and create the account
+    [HttpPost("register/verify-otp")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CompleteRegistration([FromBody] CompleteRegistrationRequest dto)
+    {
+      var cancellationToken = HttpContext.RequestAborted;
+      if (dto == null)
+        return BadRequest(new { message = "Request body is required." });
+
+      var email = (dto.Email ?? string.Empty).Trim().ToLowerInvariant();
+      var password = dto.Password ?? string.Empty;
+      var fullName = (dto.FullName ?? string.Empty).Trim();
+      var code = (dto.Code ?? string.Empty).Trim();
+
+      if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(code))
+        return BadRequest(new { message = "Email, password, full name and OTP code are required." });
+
+      if (!IsValidEmail(email))
+        return BadRequest(new { message = "Invalid email format." });
+
+      if (code.Length != 6 || !code.All(char.IsDigit))
+        return BadRequest(new { message = "OTP code must be a 6-digit number." });
+
+      var existingAccount = await _db.accounts.FirstOrDefaultAsync(a => a.email == email, cancellationToken);
+      if (existingAccount != null)
+        return Conflict(new { message = "Email already registered." });
+
+      var baseUrl = GetVerifyServiceBaseUrl();
+      if (string.IsNullOrEmpty(baseUrl))
+      {
+        _logger.LogError("Verify service base URL is not configured.");
+        return StatusCode(500, new { message = "OTP service is not configured." });
+      }
+
+      try
+      {
+        var verifyResponse = await _http.PostAsJsonAsync($"{baseUrl}/otp/verify", new { Email = email, Code = code }, cancellationToken);
+        var rawBody = await verifyResponse.Content.ReadAsStringAsync();
+
+        VerifyServiceVerifyResponse? payload = null;
+        try
+        {
+          payload = JsonSerializer.Deserialize<VerifyServiceVerifyResponse>(rawBody, VerifyJsonOptions);
+        }
+        catch (JsonException jsonEx)
+        {
+          _logger.LogWarning(jsonEx, "Failed to parse Verify service verify response for {Email}.", email);
+        }
+
+        if (!verifyResponse.IsSuccessStatusCode || payload?.Verified != true)
+        {
+          var errorMessage = payload?.Error ?? ExtractProblemDetail(rawBody) ?? "OTP verification failed.";
+          _logger.LogWarning("OTP verification failed for {Email}: {Message}", email, errorMessage);
+          return StatusCode((int)verifyResponse.StatusCode, new { message = errorMessage, verified = payload?.Verified ?? false });
+        }
+
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+        var (firstName, lastName) = SplitFullName(fullName);
+        var utcNow = DateTime.UtcNow;
+
+        var account = new Account
+        {
+          email = email,
+          password = hashedPassword,
+          firstname = firstName,
+          lastname = lastName,
+          createdate = utcNow,
+          updatedate = utcNow,
+          role = 3
+        };
+
+        _db.accounts.Add(account);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(new
+        {
+          status = 200,
+          message = "Registration completed successfully.",
+          data = new { email }
+        });
+      }
+      catch (DbUpdateException dbEx)
+      {
+        _logger.LogError(dbEx, "Database error while creating account for {Email}", email);
+        return StatusCode(500, new { message = "Failed to create account. Please try again." });
+      }
+      catch (Exception ex) when (ex is not OperationCanceledException)
+      {
+        _logger.LogError(ex, "Unexpected error while verifying OTP for {Email}", email);
+        return StatusCode(500, new
+        {
+          message = "Unexpected error while verifying OTP.",
+          detail = ex.Message
+        });
+      }
+    }
+
+    // NEW CODE: value objects + helpers for Verify service integration
+    private static readonly JsonSerializerOptions VerifyJsonOptions = new(JsonSerializerDefaults.Web)
+    {
+      PropertyNameCaseInsensitive = true
+    };
+
+    private sealed record VerifyServiceSendResponse(string Email, DateTimeOffset ExpiresAt);
+
+    private sealed record VerifyServiceVerifyResponse(string Email, bool Verified, string? Error);
+
+    private string? GetVerifyServiceBaseUrl()
+    {
+      var url = _config["Services:Verify:BaseUrl"];
+      if (string.IsNullOrWhiteSpace(url))
+        return "https://verifyemail-cl42.onrender.com";
+
+      var trimmed = url.TrimEnd('/');
+      if (trimmed.Contains("localhost", StringComparison.OrdinalIgnoreCase) && trimmed.EndsWith("5001", StringComparison.Ordinal))
+        return "https://verifyemail-cl42.onrender.com";
+
+      return trimmed;
+    }
+
+    private static string? ExtractProblemDetail(string? rawBody)
+    {
+      if (string.IsNullOrWhiteSpace(rawBody))
+        return null;
+
+      try
+      {
+        using var document = JsonDocument.Parse(rawBody);
+        var root = document.RootElement;
+        if (root.TryGetProperty("detail", out var detail) && detail.ValueKind == JsonValueKind.String)
+          return detail.GetString();
+        if (root.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
+          return message.GetString();
+        if (root.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.String)
+          return error.GetString();
+        if (root.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+          return title.GetString();
+      }
+      catch (JsonException)
+      {
+        // ignore parse errors and return raw body instead
+      }
+
+      return rawBody;
     }
 
     // ===== Helper functions =====

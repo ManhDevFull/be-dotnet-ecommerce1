@@ -17,7 +17,6 @@ using dotnet.Repository;
 using be_dotnet_ecommerce1.Service;
 using be_dotnet_ecommerce1.Repository.IRepository;
 using be.Service.IService;
-using dotnet.Service.Email;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,12 +38,10 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IVariantRepository, VariantRepository>();
 builder.Services.AddScoped<IVariantService, VariantService>();
 builder.Services.AddScoped<IProductReponsitory, ProductReponsitory>();
-builder.Services.AddScoped<dotnet.Service.IService.IOrderService, dotnet.Service.OrderService>();
-builder.Services.AddScoped<dotnet.Repository.IRepository.IOrderRepository, dotnet.Repository.OrderRepository>();
-builder.Services.AddScoped<dotnet.Service.IService.IReviewService, dotnet.Service.ReviewService>();
-builder.Services.AddScoped<dotnet.Repository.IRepository.IReviewRepository, dotnet.Repository.ReviewRepository>();
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
-builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderRepository,OrderRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IReviewRepository,ReviewRepository>();
 
 
 builder.Services.AddControllers();

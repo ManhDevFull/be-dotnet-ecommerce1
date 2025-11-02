@@ -28,4 +28,13 @@ namespace dotnet.Dtos
     public string Email { get; set; } = "";
     public string Code { get; set; } = "";
   }
+
+  // NEW CODE: request body for completing sign-up after OTP verification
+  public class CompleteRegistrationRequest
+  {
+    public string Email { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string FullName { get; set; } = "";
+    public string Code { get; set; } = "";
+  }
 }
