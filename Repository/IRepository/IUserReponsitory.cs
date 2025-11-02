@@ -1,14 +1,18 @@
-using be_dotnet_ecommerce1.Model;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using dotnet.Dtos;
-using dotnet.Dtos.admin;
+using dotnet.Model;
+
 namespace dotnet.Repository.IRepository
 {
-    public interface IUserReponsitory
-    {
-        public List<UserDTO> getUserAdmin();
-        public Task<Account?> GetByIdAsync(int userId);
-        void Update(Account user);
-        Task SaveChangesAsync();
-       public List<UserAdminDTO> getUserAdmin();
+  public interface IUserReponsitory
+  {
+    List<UserDTO> getUserAdmin();
+    Task<Account?> GetByIdAsync(int userId);
+    Task<Account?> GetAccountByEmail(string email);
+    Task<bool> AddAccount(Account account);
+    Task<bool> UpdateAsync(Account account);
+    void Update(Account user);
+    Task SaveChangesAsync();
   }
 }

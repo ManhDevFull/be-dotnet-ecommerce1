@@ -1,10 +1,10 @@
-using be_dotnet_ecommerce1.Model;
+using dotnet.Model;
 using dotnet.Dtos;
 using dotnet.Dtos.admin;
 using dotnet.Repository.IRepository;
 using dotnet.Service.IService;
 using BCrypt.Net;
-using Microsoft.EntityFrameworkCore; // <-- THÊM USING NÀY
+using Microsoft.EntityFrameworkCore;
 
 namespace dotnet.Service
 {
@@ -111,11 +111,11 @@ namespace dotnet.Service
 
                 return user;
             }
-            catch (DbUpdateConcurrencyException ex)
+            catch (DbUpdateConcurrencyException)
             {
                 throw;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }

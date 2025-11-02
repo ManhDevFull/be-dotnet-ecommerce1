@@ -8,7 +8,6 @@ namespace be_dotnet_ecommerce1.Data
 {
   public class ConnectData : DbContext
   {
-    public ConnectData() { }
     public ConnectData(DbContextOptions<ConnectData> options) : base(options) { }
 
     public const string ProductAdminSql = @"
@@ -66,26 +65,25 @@ GROUP BY
   p.updatedate";
 
     // Entities
-    public DbSet<Account> accounts { get; set; }
-    public object Accounts { get; internal set; }
-    public DbSet<Address> address { get; set; }
-    public DbSet<Brand> brands { get; set; }
-    public DbSet<Category> categories { get; set; }
-    public DbSet<CategoryBrandStats> category_brand_stats { get; set; }
-    public DbSet<Discount> discounts { get; set; }
-    public DbSet<DiscountProduct> discountProducts { get; set; }
-    public DbSet<Order> orders { get; set; }
-    public DbSet<Product> products { get; set; }
-    public DbSet<Review> reviews { get; set; }
-    public DbSet<ShoppingCart> shoppingCarts { get; set; }
-    public DbSet<Variant> variants { get; set; }
-    public DbSet<WishList> wishLists { get; set; }
-    public DbSet<EmailVerification> emailVerifications { get; set; }
+    public DbSet<Account> accounts { get; set; } = null!;
+    public DbSet<Address> address { get; set; } = null!;
+    public DbSet<Brand> brands { get; set; } = null!;
+    public DbSet<Category> categories { get; set; } = null!;
+    public DbSet<CategoryBrandStats> category_brand_stats { get; set; } = null!;
+    public DbSet<Discount> discounts { get; set; } = null!;
+    public DbSet<DiscountProduct> discountProducts { get; set; } = null!;
+    public DbSet<Order> orders { get; set; } = null!;
+    public DbSet<Product> products { get; set; } = null!;
+    public DbSet<Review> reviews { get; set; } = null!;
+    public DbSet<ShoppingCart> shoppingCarts { get; set; } = null!;
+    public DbSet<Variant> variants { get; set; } = null!;
+    public DbSet<WishList> wishLists { get; set; } = null!;
+    public DbSet<EmailVerification> emailVerifications { get; set; } = null!;
 
     // DTO / Views
-    public DbSet<CategoryAdminDTO> categoryAdmins { get; set; }
-    public DbSet<UserAdminDTO> userAdmins { get; set; }
-    public DbSet<ProductAdminDTO> productAdmins { get; set; }
+    public DbSet<CategoryAdminDTO> categoryAdmins { get; set; } = null!;
+    public DbSet<UserAdminDTO> userAdmins { get; set; } = null!;
+    public DbSet<ProductAdminDTO> productAdmins { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,6 +1,7 @@
-using dotnet.Dtos;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using dotnet.Dtos;
 using dotnet.Dtos.admin;
 using dotnet.Repository.IRepository;
 using dotnet.Service.IService;
@@ -30,22 +31,22 @@ namespace dotnet.Service
         DateTime? fromDate,
         DateTime? toDate)
     {
-      return _repository.GetOrdersAsync(page, size, status, payment, payType, keyword, fromDate, toDate);
+      return _repo.GetOrdersAsync(page, size, status, payment, payType, keyword, fromDate, toDate);
     }
 
     public Task<OrderAdminDTO?> GetOrderDetailAsync(int orderId)
     {
-      return _repository.GetOrderDetailAsync(orderId);
+      return _repo.GetOrderDetailAsync(orderId);
     }
 
     public Task<bool> UpdateOrderStatusAsync(int orderId, string status, string? paymentStatus)
     {
-      return _repository.UpdateOrderStatusAsync(orderId, status, paymentStatus);
+      return _repo.UpdateOrderStatusAsync(orderId, status, paymentStatus);
     }
 
     public Task<OrderAdminSummaryDTO> GetSummaryAsync()
     {
-      return _repository.GetSummaryAsync();
+      return _repo.GetSummaryAsync();
     }
   }
 }
