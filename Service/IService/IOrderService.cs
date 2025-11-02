@@ -1,11 +1,13 @@
+using dotnet.Dtos;
+namespace dotnet.Service.IService
 using System;
 using System.Threading.Tasks;
 using dotnet.Dtos.admin;
-
-namespace dotnet.Service.IService
 {
-  public interface IOrderService
-  {
+    public interface IOrderService
+    {
+        Task<IEnumerable<OrderHistoryDTO>> GetOrderHistoryAsync(int accountId);
+
     Task<PagedResult<OrderAdminDTO>> GetOrdersAsync(
         int page,
         int size,

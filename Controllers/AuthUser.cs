@@ -173,6 +173,7 @@ namespace dotnet.Controllers
             firstname = fn,
             lastname = ln,
             avatarimg = avatarUrl,
+            createdate = DateTime.UtcNow,// moi hoi chat phan nay loi gi ben sql datetime utc
             role = 3
           };
           _db.Add(user);

@@ -1,3 +1,4 @@
+using dotnet.Dtos;
 using System;
 using System.Threading.Tasks;
 using dotnet.Dtos.admin;
@@ -6,14 +7,18 @@ using dotnet.Service.IService;
 
 namespace dotnet.Service
 {
-  public class OrderService : IOrderService
-  {
-    private readonly IOrderRepository _repository;
-
-    public OrderService(IOrderRepository repository)
+    public class OrderService : IOrderService
     {
-      _repository = repository;
-    }
+        private readonly IOrderRepository _repo;
+        public OrderService(IOrderRepository repo)
+        {
+            _repo = repo;
+        }
+
+        public async Task<IEnumerable<OrderHistoryDTO>> GetOrderHistoryAsync(int accountId)
+        {
+            return await _repo.GetOrderHistoryAsync(accountId);
+        }
 
     public Task<PagedResult<OrderAdminDTO>> GetOrdersAsync(
         int page,

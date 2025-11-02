@@ -1,6 +1,14 @@
+using dotnet.Dtos;
 using System;
 using System.Threading.Tasks;
 using dotnet.Dtos.admin;
+namespace dotnet.Repository.IRepository
+{
+    public interface IOrderRepository
+    {
+        Task<IEnumerable<OrderHistoryDTO>> GetOrderHistoryAsync(int accountId);
+    }
+}
 
 namespace dotnet.Repository.IRepository
 {

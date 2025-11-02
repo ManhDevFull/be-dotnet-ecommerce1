@@ -67,6 +67,7 @@ GROUP BY
 
     // Entities
     public DbSet<Account> accounts { get; set; }
+    public object Accounts { get; internal set; }
     public DbSet<Address> address { get; set; }
     public DbSet<Brand> brands { get; set; }
     public DbSet<Category> categories { get; set; }
@@ -362,5 +363,6 @@ GROUP BY
 
       base.OnModelCreating(modelBuilder);
     }
+
   }
 }
