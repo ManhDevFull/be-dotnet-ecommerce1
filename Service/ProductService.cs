@@ -46,7 +46,7 @@ namespace be_dotnet_ecommerce1.Service
             var values = string.Join(",", item.Value.Select(v => $"'{v}'"));
             if (key == "brand")
               conditions.Add($"view.brand IN ({values})");
-            else if (key == "category")
+            else if (key == "namecategory")
               conditions.Add($"view.categoryName  IN ({values})");
             else
               //conditions.Add($"v.valuevariant ->> '{key}' IN ({values})");

@@ -1,55 +1,7 @@
 cells:
   - kind: 2
     languageId: sql
-    value: "CREATE or REPLACE VIEW V_VaraintByCategory AS\r
-
-      SELECT\r
-
-      \    c.id AS category_id,\r
-
-      \    c.nameCategory,\r
-
-      \    b._id AS brand_id,\r
-
-      \    b.name AS brand_name,\r
-
-      \    p._id AS product_id,\r
-
-      \    p.nameProduct,\r
-
-      \    v._id AS variant_id,\r
-
-      \    v.valueVariant,  -- Đây là cột JSONB chứa (color, size, ...)\r
-
-      \    v.stock,\r
-
-      \    v.price,\r
-
-      \    v.isDeleted\r
-
-      FROM\r
-
-      \    variant v\r
-
-      JOIN\r
-
-      \    product p ON v.product_id = p.id\r
-
-      JOIN\r
-
-      \    category c ON p.category = c.id  \r
-
-      JOIN\r
-
-      \    brand b ON p.brand_id= b.id;\r
-
-      \r
-
-      \r
-
-      \r
-
-      \    ----\r
+    value: "\r
 
       CREATE OR REPLACE VIEW V_VariantByCategory AS\r
 
@@ -236,13 +188,15 @@ cells:
 
       \    VariantObject vo ON c.id = vo.category_id;\r
 
-      \    \r
+      \r
 
       \r
 
-      select * from v_varaintbycategory WHERE namecategory = 'Clothing'\r
+      SELECT * from v_variant_filters WHERE key = 'category'\r
 
       \r
+
+      select id, namecategory from v_variantbycategory\r
 
       [\r
 
@@ -266,9 +220,56 @@ cells:
 
       \        ]\r
 
+      \    },\r
+
+      \      {\r
+
+      \        id: 2,\r
+
+      \        nameCategory: \"samsung\",\r
+
+      \        brand: [\"lenovo\", \"dell\"],\r
+
+      \        variant: [\r
+
+      \            {\r
+
+      \                size: [\"L, M, XL\"],\r
+
+      \                color: [\"Red\", \"Blue\"]\r
+
+      \            }\r
+
+      \        ]\r
+
       \    }\r
 
-      ]"
+      ]\r
+
+      \r
+
+      \r
+
+      \      select distinct view.*\r
+
+      \            FROM v_products_filter view\r
+
+      \             where  exists (\r
+
+      \                      select 1\r
+
+      \                      from jsonb_array_elements(view.variant) as elem\r
+
+      \                      WHERE ((elem->'valuevariant')->>'namecategory') IN
+      ('iPads')\r
+
+      \                  )\r
+
+      \            order by view.id\r
+
+      \            offset 0 rows\r
+
+      \            fetch next  9 rows only"
     metadata: {}
   - kind: 2
     languageId: sql

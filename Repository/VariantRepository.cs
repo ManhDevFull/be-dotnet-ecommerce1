@@ -16,82 +16,46 @@ namespace be_dotnet_ecommerce1.Repository.IRepository
         {
             _connect = connect;
         }
+
+        public async Task<List<V_VariantFilterDTO>> getAllVariant() // lấy ra tất cả các variant từ view from v_variant_filters
+        {
+            var data = await _connect.Database.SqlQueryRaw<V_VariantFilterDTO>(@"SELECT * from v_variant_filters")
+            .ToListAsync();
+            return data;
+        }
+
+
         public async Task<List<VariantFilterDTO>> GetValueVariant()
         {
-            //     var data = await _connect.Database
-            // .SqlQueryRaw<VariantFilterDTO>(@"
-            //     SELECT 
-            //     key, 
-            //     array_agg(DISTINCT value ORDER BY value) AS values
-            // FROM (
-            //     -- Lấy các thuộc tính từ valuevariant (Không thay đổi)
-            //     SELECT 
-            //         kv.key::text AS key, 
-            //         kv.value::text AS value
-            //     FROM category 
-            //     JOIN product ON category.id = product.category
-            //     JOIN variant ON product.id = variant.product_id
-            //     CROSS JOIN LATERAL jsonb_each_text(variant.valuevariant) AS kv(key, value)
-            //     --WHERE category.id = 1
-            //     --AND variant.isdeleted = false
-            //     --AND product.isdeleted = false
-
-            //     UNION ALL
-
-            //     -- Thêm giá như một thuộc tính (Không thay đổi)
-            //     SELECT 
-            //         'price' AS key,
-            //         v.price::text AS value
-            //     FROM category c
-            //     JOIN product p ON c.id = p.category
-            //     JOIN variant v ON p.id = v.product_id
-            //     --WHERE c.id = 1
-            //     AND v.isdeleted = false
-            //     AND p.isdeleted = false
-
-            //     UNION ALL
-
-            //     --- Thêm thương hiệu (ĐÃ CẬP NHẬT)
-            //     SELECT
-            //         'brand' as key,
-            //         b.name::text as value  -- Lấy 'name' từ bảng 'brand'
-            //     FROM product p
-            //     JOIN brand b ON p.brand_id = b.id -- Join 'product' với 'brand' qua khóa ngoại
-
-            //     UNION ALL
-
-            //     -- thêm danh mục (Không thay đổi)
-            //     SELECT
-            //         'category' as key,
-            //         c.namecategory::text as value
-            //     FROM category c
-            // ) AS combined
-            // GROUP BY key
-            // ORDER BY key;
-            // ")
-            // .ToListAsync();
-
-            //     return data;
-
-            // chuyển sang dùng view
             var data = await _connect.Database.SqlQueryRaw<VariantFilterDTO>(@"SELECT * from v_variant_filters").ToListAsync();
             return data;
         }
 
-        public async Task<List<VariantFilterDTO>> GetValueVariantByNameCategory(string name)
+        public async Task<List<VariantFilterDTO>> GetValueVariantByNameCategory(string? name)
         {
-            var sql = $@"select * from v_varaintbycategory";
-            if(name != null)
-                sql += " WHERE namecategory = '{name}'";
-            var dataRow = await _connect.Set<V_variant>()
-            .FromSqlRaw(sql)
-            .ToListAsync();
-            var rs = dataRow.Select(r=> new VariantFilterDTO{
+            // Bắt đầu một IQueryable, chưa thực thi
+            var query = _connect.Set<V_variant>().AsQueryable();
+
+            // 1. Làm sạch và kiểm tra đầu vào
+            if (!string.IsNullOrEmpty(name))
+            {
+                var cleanedName = name.Trim(); // Loại bỏ khoảng trắng/ký tự xuống dòng
+                                               // 2. Thêm điều kiện WHERE một cách an toàn
+                query = query.Where(v => v.namecategory == cleanedName);
+            }
+
+            // 3. Thực thi truy vấn (EF Core tự động tạo SQL an toàn)
+            var dataRow = await query.ToListAsync();
+
+            // 4. Ánh xạ kết quả (phần này vẫn giữ nguyên)
+            var rs = dataRow.Select(r => new VariantFilterDTO
+            {
                 id = r.id,
                 namecategory = r.namecategory,
                 brand = r.brand,
-                variant = string.IsNullOrEmpty(r.variant) ? null
-                 : JsonSerializer.Deserialize<Dictionary<string, string[]>>(r.variant)
+                variant = string.IsNullOrEmpty(r.variant)
+                    ? null
+                    : JsonSerializer.Deserialize<List<Dictionary<string, string[]>>>(r.variant)?.FirstOrDefault()
             }).ToList();
             return rs;
         }

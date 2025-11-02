@@ -1,4 +1,5 @@
 using be_dotnet_ecommerce1.Data;
+using be_dotnet_ecommerce1.Dtos;
 using be_dotnet_ecommerce1.Model;
 using be_dotnet_ecommerce1.Repository.IReopsitory;
 using Microsoft.EntityFrameworkCore;
@@ -46,10 +47,15 @@ namespace be_dotnet_ecommerce1.Repository
       return list;
     }
 
-    public async Task<List<Category>> getAllCategory()
+    public async Task<List<V_CategoryDTO>> getAllCategory()
     {
-      var result = await _connect.categories.ToListAsync();
-      return result;
+      var rs = await _connect.Set<V_Category>().Where(v=>v.key == "category")
+      .Select(d => new V_CategoryDTO
+      {
+        key = d.key,
+        values = d.values
+      }).ToListAsync();
+      return rs;
     }
 
     public async Task<List<Category>> getCategoryByProductIds(List<int> ids)

@@ -25,7 +25,9 @@ namespace be_dotnet_ecommerce1.Data
 
     /// view
     public DbSet<V_ProductFilter> v_ProductFilters{ get; set; }
-    public DbSet<V_variant> v_Variants{get; set;}
+    public DbSet<V_variant> v_Variants { get; set; }
+    // v_category
+    public DbSet<V_Category> v_Categories { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       modelBuilder.Entity<Category>(entity =>
@@ -145,9 +147,16 @@ namespace be_dotnet_ecommerce1.Data
         entity.ToView("V_Products_filter");
       });
       // view V_variant
-      modelBuilder.Entity<V_variant>(entity=>{
+      modelBuilder.Entity<V_variant>(entity =>
+      {
         entity.HasNoKey();
-        entity.ToView("V_VariantByCategory");
+        entity.ToView("v_variantbycategory");
+      });
+      // view v_category
+      modelBuilder.Entity<V_Category>(entity =>
+      {
+        entity.HasNoKey();
+        entity.ToView("v_variant_filters");
       });
     }
   }

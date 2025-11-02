@@ -20,8 +20,15 @@ namespace be_dotnet_ecommerce1.Controllers
         //     var list = await _service.getValueVariant();
         //     return Ok(list);
         // }
+        [HttpGet("getAllVariant")]
+        public async Task<IActionResult> getAllVariant()
+        {
+            var rs = await _service.getAllVariant();
+            return Ok(rs);
+        }
+
         [HttpGet]
-        public async Task<IActionResult> getValueVarianByCategory(string name){
+        public async Task<IActionResult> getValueVarianByCategory(string? name){
             var rs = await _service.getValueVariantByNameCategory(name);
             return Ok(rs);
         }

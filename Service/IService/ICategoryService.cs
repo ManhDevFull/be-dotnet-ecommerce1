@@ -6,6 +6,7 @@ namespace be_dotnet_ecommerce1.Service.IService
   public interface ICategoryService
   {
     public List<CategoryDTO> getCategoryParentById(int? id);
+    public Task<List<V_CategoryDTO>> getAllCategory();
     public List<CategoryAdmin> getCategoryAdmin();
   }
 }
