@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using be_dotnet_ecommerce1.Model;
 using dotnet.Dtos;
+using dotnet.Dtos.admin;
 
 namespace dotnet.Service.IService
 {
@@ -15,5 +16,6 @@ namespace dotnet.Service.IService
     Task<bool> ChangePasswordAsync(int userId, string oldPassword, string newPassword);
 
     Task<bool> UpdateAvatarUrlAsync(int userId, string avatarUrl);
+    public List<UserAdminDTO> getUsers();
   }
 }

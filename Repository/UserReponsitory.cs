@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using be_dotnet_ecommerce1.Data;
-using dotnet.Dtos;
+using dotnet.Dtos.admin;
 using dotnet.Repository.IRepository;
 using be_dotnet_ecommerce1.Model;
 

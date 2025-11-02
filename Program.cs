@@ -46,6 +46,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 // 2. Đăng ký IPhotoService
 builder.Services.AddScoped<IPhotoService, PhotoService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IReviewRepository,ReviewRepository>();
 
 
 builder.Services.AddControllers();

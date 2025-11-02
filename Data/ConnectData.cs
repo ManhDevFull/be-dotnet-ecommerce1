@@ -1,10 +1,8 @@
-using System.Reflection.Emit;
-using System.Runtime.Intrinsics.Arm;
 using be_dotnet_ecommerce1.Model;
-using dotnet.Dtos;
 using dotnet.Dtos.admin;
 using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace be_dotnet_ecommerce1.Data
 {
@@ -12,10 +10,68 @@ namespace be_dotnet_ecommerce1.Data
   {
     public ConnectData() { }
     public ConnectData(DbContextOptions<ConnectData> options) : base(options) { }
+
+    public const string ProductAdminSql = @"
+SELECT
+  p.id AS product_id,
+  p.nameproduct AS name,
+  COALESCE(b.name, '') AS brand,
+  p.description,
+  p.category AS category_id,
+  c.namecategory AS category_name,
+  p.imageurls,
+  p.createdate,
+  p.updatedate,
+  COALESCE(
+    jsonb_agg(
+      jsonb_build_object(
+        'variant_id',   v.id,
+        'product_id',   v.product_id,
+        'valuevariant', v.valuevariant,
+        'stock',        v.stock,
+        'inputprice',   v.inputprice,
+        'price',        v.price,
+        'createdate',   v.createdate,
+        'updatedate',   v.updatedate,
+        'isdeleted',    v.isdeleted,
+        'sold',         COALESCE(s.units_sold, 0)::int
+      )
+      ORDER BY v.id
+    ) FILTER (WHERE v.id IS NOT NULL),
+    '[]'::jsonb
+  ) AS variants,
+  COUNT(v.id)::int AS variant_count,
+  MIN(v.price) AS min_price,
+  MAX(v.price) AS max_price
+FROM product p
+LEFT JOIN brand b ON b.id = p.brand_id
+LEFT JOIN category c ON c.id = p.category
+LEFT JOIN variant v ON v.product_id = p.id AND NOT v.isdeleted
+LEFT JOIN LATERAL (
+  SELECT SUM(o.quantity) AS units_sold
+  FROM orders o
+  WHERE o.variant_id = v.id
+    AND o.statusorder = 'DELIVERED'
+) s ON TRUE
+WHERE NOT p.isdeleted
+GROUP BY
+  p.id,
+  p.nameproduct,
+  b.name,
+  p.description,
+  p.category,
+  c.namecategory,
+  p.imageurls,
+  p.createdate,
+  p.updatedate";
+
+    // Entities
     public DbSet<Account> accounts { get; set; }
     public object Accounts { get; internal set; }
     public DbSet<Address> address { get; set; }
+    public DbSet<Brand> brands { get; set; }
     public DbSet<Category> categories { get; set; }
+    public DbSet<CategoryBrandStats> category_brand_stats { get; set; }
     public DbSet<Discount> discounts { get; set; }
     public DbSet<DiscountProduct> discountProducts { get; set; }
     public DbSet<Order> orders { get; set; }
@@ -24,191 +80,287 @@ namespace be_dotnet_ecommerce1.Data
     public DbSet<ShoppingCart> shoppingCarts { get; set; }
     public DbSet<Variant> variants { get; set; }
     public DbSet<WishList> wishLists { get; set; }
-    public DbSet<CategoryAdmin> categoryAdmins { get; set; }
-    public DbSet<UserDTO> userDTOAdmins { get; set; }
+    public DbSet<EmailVerification> emailVerifications { get; set; }
 
-    public DbSet<OrderHistoryDTO> OrderHistory { get; set; }
+    // DTO / Views
+    public DbSet<CategoryAdminDTO> categoryAdmins { get; set; }
+    public DbSet<UserAdminDTO> userAdmins { get; set; }
+    public DbSet<ProductAdminDTO> productAdmins { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-      //account
-      modelBuilder.Entity<Account>(entity =>
+      // -------- account --------
+      modelBuilder.Entity<Account>(e =>
       {
-        entity.ToTable("account");
-        entity.HasKey(e => e.id);
-
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.email).HasColumnName("email");
-        entity.Property(e => e.lastname).HasColumnName("lastname");
-        entity.Property(e => e.firstname).HasColumnName("firstname");
-        entity.Property(e => e.bod).HasColumnName("bod");
-        entity.Property(e => e.password).HasColumnName("password");
-        entity.Property(e => e.role).HasColumnName("role");
-        entity.Property(e => e.avatarimg).HasColumnName("avatarimg");
-        entity.Property(e => e.createdate).HasColumnName("createdate");
-        entity.Property(e => e.updatedate).HasColumnName("updatedate");
-        entity.Property(e => e.isdeleted).HasColumnName("isdeleted");
-        entity.Property(e => e.refreshtoken).HasColumnName("refreshtoken");
-        entity.Property(e => e.refreshtokenexpires).HasColumnName("refreshtokenexpires");
+        e.ToTable("account");
+        e.HasKey(x => x.id);
+        e.Property(x => x.email).HasColumnName("email");
+        e.Property(x => x.lastname).HasColumnName("lastname");
+        e.Property(x => x.firstname).HasColumnName("firstname");
+        e.Property(x => x.bod).HasColumnName("bod");
+        e.Property(x => x.password).HasColumnName("password");
+        e.Property(x => x.role).HasColumnName("role");
+        e.Property(x => x.avatarimg).HasColumnName("avatarimg");
+        e.Property(x => x.createdate).HasColumnName("createdate");
+        e.Property(x => x.updatedate).HasColumnName("updatedate");
+        e.Property(x => x.isdeleted).HasColumnName("isdeleted");
+        e.Property(x => x.refreshtoken).HasColumnName("refreshtoken");
+        e.Property(x => x.refreshtokenexpires).HasColumnName("refreshtokenexpires");
       });
-      //address
-      modelBuilder.Entity<Address>(entity =>
+      // -------- email_verification --------
+      modelBuilder.Entity<EmailVerification>(e =>
       {
-        entity.ToTable("address");
-        entity.HasKey(e => e.id);
-
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.accountid).HasColumnName("account_id");
-        entity.Property(e => e.title).HasColumnName("title");
-        entity.Property(e => e.namerecipient).HasColumnName("namerecipient");
-        entity.Property(e => e.tel).HasColumnName("tel");
-        entity.Property(e => e.codeward).HasColumnName("codeward");
-        entity.Property(e => e.description).HasColumnName("description");
-        entity.Property(e => e.detail).HasColumnName("detail");
-        entity.Property(e => e.createdate).HasColumnName("createdate");
-        entity.Property(e => e.updatedate).HasColumnName("updatedate");
-        entity.HasOne(a => a.account).WithMany(u => u.addresses).HasForeignKey(a => a.accountid).OnDelete(DeleteBehavior.Cascade);
-      });
-      //category
-      modelBuilder.Entity<Category>(entity =>
-      {
-        entity.ToTable("category");
-        entity.HasKey(e => e.id);
-
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.namecategory).HasColumnName("namecategory");
-        entity.Property(e => e.idparent).HasColumnName("parent_id");
-
-        entity.HasMany(c => c.Children).WithOne(c => c.Parent).HasForeignKey(c => c.idparent).OnDelete(DeleteBehavior.Restrict);
-        entity.HasMany(c => c.Products).WithOne(p => p.category).HasForeignKey(p => p.categoryId).OnDelete(DeleteBehavior.Restrict);
-      });
-      //discount
-      modelBuilder.Entity<Discount>(entity =>
-      {
-        entity.ToTable("discount");
-        entity.HasKey(e => e.id);
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.typediscount).HasColumnName("typediscount");
-        entity.Property(e => e.discount).HasColumnName("discount");
-        entity.Property(e => e.starttime).HasColumnName("starttime");
-        entity.Property(e => e.endtime).HasColumnName("endtime");
-        entity.Property(e => e.createtime).HasColumnName("createtime");
-
-      });
-      //discount-product
-      modelBuilder.Entity<DiscountProduct>(entity =>
-      {
-        entity.ToTable("discount_product");
-        entity.HasKey(e => e.id);
-
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.discountid).HasColumnName("discount_id");
-        entity.Property(e => e.variantid).HasColumnName("variant_id");
-
-        entity.HasOne(dp => dp.variant).WithMany(d => d.discountProduct).HasForeignKey(dp => dp.variantid).OnDelete(DeleteBehavior.Restrict);
-        entity.HasOne(dp => dp.discount).WithMany(d => d.discountProducts).HasForeignKey(dp => dp.discountid).OnDelete(DeleteBehavior.Restrict);
-      });
-      //order
-      modelBuilder.Entity<Order>(entity =>
-      {
-        entity.ToTable("orders");
-        entity.HasKey(e => e.id);
-
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.accountid).HasColumnName("account_id");
-        entity.Property(e => e.variantid).HasColumnName("variant_id");
-        entity.Property(e => e.addressid).HasColumnName("address_id");
-        entity.Property(e => e.quantity).HasColumnName("quantity");
-        entity.Property(e => e.orderdate).HasColumnName("orderdate");
-        entity.Property(e => e.statusorder).HasColumnName("statusorder");
-        entity.Property(e => e.receivedate).HasColumnName("receivedate");
-        entity.Property(e => e.typepay).HasColumnName("typepay");
-        entity.Property(e => e.statuspay).HasColumnName("statuspay");
-
-        entity.HasOne(o => o.account).WithMany(a => a.orders).HasForeignKey(o => o.accountid).OnDelete(DeleteBehavior.Restrict);
-        entity.HasOne(o => o.address).WithMany(a => a.orders).HasForeignKey(o => o.addressid).OnDelete(DeleteBehavior.Restrict);
-        entity.HasOne(o => o.variant).WithMany(v => v.orders).HasForeignKey(o => o.variantid).OnDelete(DeleteBehavior.Restrict);
-      });
-      //product
-      modelBuilder.Entity<Product>(entity =>
-      {
-        entity.ToTable("product");
-        entity.HasKey(e => e.id);
-
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.nameproduct).HasColumnName("nameproduct");
-        entity.Property(e => e.brand).HasColumnName("brand");
-        entity.Property(e => e.description).HasColumnName("description");
-        entity.Property(e => e.categoryId).HasColumnName("category");
-        entity.Property(e => e.imageurls).HasColumnName("imageurls").HasColumnType("text[]");
-        entity.Property(e => e.createdate).HasColumnName("createdate");
-        entity.Property(e => e.updatedate).HasColumnName("updatedate");
-        entity.Property(e => e.isdeleted).HasColumnName("isdeleted");
-
-        entity.HasOne(p => p.category).WithMany(c => c.Products).HasForeignKey(p => p.categoryId).OnDelete(DeleteBehavior.Restrict);
-      });
-      //review
-      modelBuilder.Entity<Review>(entity =>
-      {
-        entity.ToTable("review");
-        entity.HasKey(e => e.id);
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.orderid).HasColumnName("order_id");
-        entity.Property(e => e.content).HasColumnName("content");
-        entity.Property(e => e.rating).HasColumnName("rating");
-        entity.Property(e => e.imageurls).HasColumnName("imageurls").HasColumnType("text[]");
-        entity.Property(e => e.createdate).HasColumnName("createdate");
-        entity.Property(e => e.updatedate).HasColumnName("updatedate");
-        entity.Property(e => e.isupdated).HasColumnName("isupdated");
-
-        entity.HasOne(r => r.order).WithOne(o => o.review).HasForeignKey<Review>(r => r.orderid).OnDelete(DeleteBehavior.Cascade);
-      });
-      //shopping-cart
-      modelBuilder.Entity<ShoppingCart>(entity =>
-      {
-        entity.ToTable("shoppingcart");
-        entity.HasKey(e => e.id);
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.accountid).HasColumnName("account_id");
-        entity.Property(e => e.variantid).HasColumnName("variant_id");
-        entity.Property(e => e.quantity).HasColumnName("quantity");
-
-        entity.HasOne(sc => sc.account).WithMany(a => a.carts).HasForeignKey(sc => sc.accountid).OnDelete(DeleteBehavior.Restrict);
-        entity.HasOne(sc => sc.variant).WithMany(v => v.carts).HasForeignKey(sc => sc.variantid).OnDelete(DeleteBehavior.Restrict);
-      });
-      //variant
-      modelBuilder.Entity<Variant>(entity =>
-      {
-        entity.ToTable("variant");
-        entity.HasKey(e => e.id);
-
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.productid).HasColumnName("product_id");
-        entity.Property(e => e.valuevariant).HasColumnName("valuevariant").HasColumnType("jsonb");
-        entity.Property(e => e.stock).HasColumnName("stock");
-        entity.Property(e => e.inputprice).HasColumnName("inputprice");
-        entity.Property(e => e.price).HasColumnName("price");
-        entity.Property(e => e.createdate).HasColumnName("createdate");
-        entity.Property(e => e.updatedate).HasColumnName("updatedate");
-        entity.Property(e => e.isdeleted).HasColumnName("isdeleted");
-        entity.HasOne(v => v.product).WithMany(p => p.variants).HasForeignKey(v => v.productid).OnDelete(DeleteBehavior.Restrict);
-      });
-      //wish-list
-      modelBuilder.Entity<WishList>(entity =>
-      {
-        entity.ToTable("wishlist");
-        entity.HasKey(e => e.id);
-
-        entity.Property(e => e.id).HasColumnName("id");
-        entity.Property(e => e.accountid).HasColumnName("account_id");
-        entity.Property(e => e.productid).HasColumnName("product_id");
-        entity.HasOne(wl => wl.product).WithMany(p => p.wishlists).HasForeignKey(wl => wl.productid).OnDelete(DeleteBehavior.Restrict);
-        entity.HasOne(wl => wl.account).WithMany(a => a.wishlists).HasForeignKey(wl => wl.accountid).OnDelete(DeleteBehavior.Restrict);
+        e.ToTable("email_verification");
+        e.HasKey(x => x.id);
+        e.HasIndex(x => x.email).IsUnique();
+        e.Property(x => x.email).HasColumnName("email");
+        e.Property(x => x.codehash).HasColumnName("codehash");
+        e.Property(x => x.passwordhash).HasColumnName("passwordhash");
+        e.Property(x => x.firstname).HasColumnName("firstname");
+        e.Property(x => x.lastname).HasColumnName("lastname");
+        e.Property(x => x.expiresat).HasColumnName("expiresat");
+        e.Property(x => x.createdat).HasColumnName("createdat");
+        e.Property(x => x.updatedat).HasColumnName("updatedat");
+        e.Property(x => x.attemptcount).HasColumnName("attemptcount");
+        e.Property(x => x.lastsentat).HasColumnName("lastsentat");
       });
 
+      // -------- address --------
+      modelBuilder.Entity<Address>(e =>
+      {
+        e.ToTable("address");
+        e.HasKey(x => x.id);
+        e.Property(x => x.accountid).HasColumnName("account_id");
+        e.Property(x => x.title).HasColumnName("title");
+        e.Property(x => x.namerecipient).HasColumnName("namerecipient");
+        e.Property(x => x.tel).HasColumnName("tel");
+        e.Property(x => x.codeward).HasColumnName("codeward");
+        e.Property(x => x.description).HasColumnName("description");
+        e.Property(x => x.detail).HasColumnName("detail");
+        e.Property(x => x.createdate).HasColumnName("createdate");
+        e.Property(x => x.updatedate).HasColumnName("updatedate");
 
-      modelBuilder.Entity<CategoryAdmin>().HasNoKey().ToView(null);
-      modelBuilder.Entity<UserDTO>().HasNoKey().ToView(null);
-      modelBuilder.Entity<OrderHistoryDTO>().HasNoKey().ToView(null);
+        e.HasOne(x => x.account)
+         .WithMany(a => a.addresses)
+         .HasForeignKey(x => x.accountid)
+         .OnDelete(DeleteBehavior.Cascade);
+      });
+
+      // -------- brand --------
+      modelBuilder.Entity<Brand>(e =>
+      {
+        e.ToTable("brand");
+        e.HasKey(x => x.id);
+        e.Property(x => x.name).HasColumnName("name");
+      });
+
+      // -------- category --------
+      modelBuilder.Entity<Category>(e =>
+      {
+        e.ToTable("category");
+        e.HasKey(x => x.id);
+        e.Property(x => x.namecategory).HasColumnName("namecategory");
+        e.Property(x => x.idparent).HasColumnName("parent_id");
+
+        e.HasOne(x => x.Parent)
+         .WithMany(p => p.Children)
+         .HasForeignKey(x => x.idparent)
+         .OnDelete(DeleteBehavior.Restrict);
+
+        e.HasMany(x => x.Products)
+         .WithOne(p => p.category)
+         .HasForeignKey(p => p.categoryId)
+         .OnDelete(DeleteBehavior.Restrict);
+      });
+      // -------- CategoryBrandStats --------
+      modelBuilder.Entity<CategoryBrandStats>(e =>
+      {
+        e.ToTable("category_brand_stats");
+        e.HasKey(x => new { x.category_id, x.brand_id });
+        e.Property(x => x.category_id).HasColumnName("category_id");
+        e.Property(x => x.brand_id).HasColumnName("brand_id");
+        e.Property(x => x.product_count).HasColumnName("product_count");
+        e.Property(x => x.variant_count).HasColumnName("variant_count");
+        e.Property(x => x.units_sold).HasColumnName("units_sold");
+        e.Property(x => x.revenue).HasColumnName("revenue");
+        e.Property(x => x.updated_at).HasColumnName("updated_at");
+      });
+      // -------- discount --------
+      modelBuilder.Entity<Discount>(e =>
+      {
+        e.ToTable("discount");
+        e.HasKey(x => x.id);
+        e.Property(x => x.typediscount).HasColumnName("typediscount");
+        e.Property(x => x.discount).HasColumnName("discount");
+        e.Property(x => x.starttime).HasColumnName("starttime");
+        e.Property(x => x.endtime).HasColumnName("endtime");
+        e.Property(x => x.createtime).HasColumnName("createtime");
+      });
+
+      // -------- discount_product --------
+      modelBuilder.Entity<DiscountProduct>(e =>
+      {
+        e.ToTable("discount_product");
+        e.HasKey(x => x.id);
+        e.Property(x => x.discountid).HasColumnName("discount_id");
+        e.Property(x => x.variantid).HasColumnName("variant_id");
+
+        e.HasOne(x => x.variant)
+         .WithMany(v => v.discountProduct)
+         .HasForeignKey(x => x.variantid)
+         .OnDelete(DeleteBehavior.Restrict);
+
+        e.HasOne(x => x.discount)
+         .WithMany(d => d.discountProducts)
+         .HasForeignKey(x => x.discountid)
+         .OnDelete(DeleteBehavior.Restrict);
+      });
+
+      // -------- orders --------
+      modelBuilder.Entity<Order>(e =>
+      {
+        e.ToTable("orders");
+        e.HasKey(x => x.id);
+        e.Property(x => x.accountid).HasColumnName("account_id");
+        e.Property(x => x.variantid).HasColumnName("variant_id");
+        e.Property(x => x.addressid).HasColumnName("address_id");
+        e.Property(x => x.quantity).HasColumnName("quantity");
+        e.Property(x => x.orderdate).HasColumnName("orderdate");
+        e.Property(x => x.statusorder).HasColumnName("statusorder");
+        e.Property(x => x.receivedate).HasColumnName("receivedate");
+        e.Property(x => x.typepay).HasColumnName("typepay");
+        e.Property(x => x.statuspay).HasColumnName("statuspay");
+
+        e.HasOne(x => x.account).WithMany(a => a.orders)
+         .HasForeignKey(x => x.accountid).OnDelete(DeleteBehavior.Restrict);
+
+        e.HasOne(x => x.address).WithMany(a => a.orders)
+         .HasForeignKey(x => x.addressid).OnDelete(DeleteBehavior.Restrict);
+
+        e.HasOne(x => x.variant).WithMany(v => v.orders)
+         .HasForeignKey(x => x.variantid).OnDelete(DeleteBehavior.Restrict);
+      });
+
+      // -------- product --------
+      modelBuilder.Entity<Product>(e =>
+ {
+   e.ToTable("product");
+   e.HasKey(x => x.id);
+
+   e.Property(x => x.nameproduct).HasColumnName("nameproduct");
+   e.Property(x => x.brand_id).HasColumnName("brand_id");       // FK cột số
+   e.Property(x => x.description).HasColumnName("description");
+   e.Property(x => x.categoryId).HasColumnName("category");
+   e.Property(x => x.imageurls).HasColumnName("imageurls").HasColumnType("text[]");
+   e.Property(x => x.createdate).HasColumnName("createdate");
+   e.Property(x => x.updatedate).HasColumnName("updatedate");
+   e.Property(x => x.isdeleted).HasColumnName("isdeleted");
+
+   // Category -> Products
+   e.HasOne(x => x.category)
+    .WithMany(c => c.Products)
+    .HasForeignKey(x => x.categoryId)
+    .OnDelete(DeleteBehavior.Restrict);
+
+   // Brand -> Products  (SỬA Ở ĐÂY)
+   e.HasOne(x => x.brand)                 // navigation property kiểu Brand
+    .WithMany(b => b.products)            // collection bên Brand
+    .HasForeignKey(x => x.brand_id)       // cột FK
+    .OnDelete(DeleteBehavior.Restrict);
+ });
+
+      // -------- review --------
+      modelBuilder.Entity<Review>(e =>
+      {
+        e.ToTable("review");
+        e.HasKey(x => x.id);
+        e.Property(x => x.orderid).HasColumnName("order_id");
+        e.Property(x => x.content).HasColumnName("content");
+        e.Property(x => x.rating).HasColumnName("rating");
+        e.Property(x => x.imageurls).HasColumnName("imageurls").HasColumnType("text[]");
+        e.Property(x => x.createdate).HasColumnName("createdate");
+        e.Property(x => x.updatedate).HasColumnName("updatedate");
+        e.Property(x => x.isupdated).HasColumnName("isupdated");
+
+        e.HasOne(x => x.order)
+         .WithOne(o => o.review)
+         .HasForeignKey<Review>(x => x.orderid)
+         .OnDelete(DeleteBehavior.Cascade);
+      });
+
+      // -------- shoppingcart --------
+      modelBuilder.Entity<ShoppingCart>(e =>
+      {
+        e.ToTable("shoppingcart");
+        e.HasKey(x => x.id);
+        e.Property(x => x.accountid).HasColumnName("account_id");
+        e.Property(x => x.variantid).HasColumnName("variant_id");
+        e.Property(x => x.quantity).HasColumnName("quantity");
+
+        e.HasOne(x => x.account).WithMany(a => a.carts)
+         .HasForeignKey(x => x.accountid).OnDelete(DeleteBehavior.Restrict);
+
+        e.HasOne(x => x.variant).WithMany(v => v.carts)
+         .HasForeignKey(x => x.variantid).OnDelete(DeleteBehavior.Restrict);
+      });
+
+      // -------- variant --------
+      modelBuilder.Entity<Variant>(e =>
+      {
+        e.ToTable("variant");
+        e.HasKey(x => x.id);
+        e.Property(x => x.productid).HasColumnName("product_id");
+        e.Property(x => x.valuevariant).HasColumnName("valuevariant").HasColumnType("jsonb");
+        e.Property(x => x.stock).HasColumnName("stock");
+        e.Property(x => x.inputprice).HasColumnName("inputprice");
+        e.Property(x => x.price).HasColumnName("price");
+        e.Property(x => x.createdate).HasColumnName("createdate");
+        e.Property(x => x.updatedate).HasColumnName("updatedate");
+        e.Property(x => x.isdeleted).HasColumnName("isdeleted");
+
+        e.HasOne(x => x.product)
+         .WithMany(p => p.variants)
+         .HasForeignKey(x => x.productid)
+         .OnDelete(DeleteBehavior.Restrict);
+      });
+
+      // -------- wishlist --------
+      modelBuilder.Entity<WishList>(e =>
+      {
+        e.ToTable("wishlist");
+        e.HasKey(x => x.id);
+        e.Property(x => x.accountid).HasColumnName("account_id");
+        e.Property(x => x.productid).HasColumnName("product_id");
+
+        e.HasOne(x => x.product).WithMany(p => p.wishLists)
+         .HasForeignKey(x => x.productid).OnDelete(DeleteBehavior.Restrict);
+
+        e.HasOne(x => x.account).WithMany(a => a.wishlists)
+         .HasForeignKey(x => x.accountid).OnDelete(DeleteBehavior.Restrict);
+      });
+
+      // -------- Admin DTO / Views --------
+      modelBuilder.Entity<CategoryAdminDTO>().HasNoKey().ToView(null);
+      modelBuilder.Entity<UserAdminDTO>().HasNoKey().ToView(null);
+      modelBuilder.Entity<ProductAdminDTO>(e =>
+      {
+        e.HasNoKey();
+        e.ToSqlQuery(ProductAdminSql);
+        e.Property(x => x.product_id).HasColumnName("product_id");
+        e.Property(x => x.name).HasColumnName("name");
+        e.Property(x => x.brand).HasColumnName("brand");
+        e.Property(x => x.description).HasColumnName("description");
+        e.Property(x => x.category_id).HasColumnName("category_id");
+        e.Property(x => x.category_name).HasColumnName("category_name");
+        e.Property(x => x.imageurls).HasColumnName("imageurls");
+        e.Property(x => x.createdate).HasColumnName("createdate");
+        e.Property(x => x.updatedate).HasColumnName("updatedate");
+        e.Property(x => x.variants).HasColumnName("variants");
+        e.Property(x => x.variant_count).HasColumnName("variant_count");
+        e.Property(x => x.min_price).HasColumnName("min_price");
+        e.Property(x => x.max_price).HasColumnName("max_price");
+      });
+
       base.OnModelCreating(modelBuilder);
     }
 

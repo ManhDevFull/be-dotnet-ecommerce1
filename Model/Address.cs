@@ -1,9 +1,6 @@
-using be_dotnet_ecommerce1.Model;
-
-namespace dotnet.Model
+namespace dotnet.Model;
+public class Address
 {
-  public class Address
-  {
     public int id { get; set; }
     public int accountid { get; set; }
     public string title { get; set; } = null!;
@@ -14,7 +11,7 @@ namespace dotnet.Model
     public string? detail { get; set; }
     public DateTime? createdate { get; set; }
     public DateTime? updatedate { get; set; }
-    public Account? account { get; set; }
-    public List<Order>? orders { get; set; }
-  }
+
+    public Account account { get; set; } = null!;
+    public ICollection<Order> orders { get; set; } = new List<Order>();
 }
