@@ -10,6 +10,14 @@ using Microsoft.EntityFrameworkCore;
 using be_dotnet_ecommerce1.Service.IService;
 using be_dotnet_ecommerce1.Repository.IReopsitory;
 using be_dotnet_ecommerce1.Repository;
+using dotnet.Service.IService;
+using dotnet.Service;
+using dotnet.Repository.IRepository;
+using dotnet.Repository;
+using be_dotnet_ecommerce1.Service;
+using be_dotnet_ecommerce1.Repository.IRepository;
+using be.Service.IService;
+using be_dotnet_ecommerce1.Dtos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,9 +29,27 @@ builder.Services.AddDbContext<ConnectData>(options =>
 {
   options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-// đăng ký tự động inject thông qua constructor
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserReponsitory, UserReponsitory>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IAddressReponsitory, AddressReponsitory>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IVariantRepository, VariantRepository>();
+builder.Services.AddScoped<IVariantService, VariantService>();
+builder.Services.AddScoped<IProductReponsitory, ProductReponsitory>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+// 1. Đọc "Cloudinary" từ appsettings.json và map vào class CloudinarySettings
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+// 2. Đăng ký IPhotoService
+builder.Services.AddScoped<IPhotoService, PhotoService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IReviewRepository,ReviewRepository>();
+
+
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 // CORS
@@ -67,7 +93,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     };
     options.Events = new JwtBearerEvents
     {
-      OnAuthenticationFailed = ctx =>
+      OnForbidden = context =>
+      {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        context.Response.ContentType = "application/json";
+
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+          success = false,
+          message = "Bạn không có quyền truy cập tài nguyên này",
+          code = 403
+        });
+
+        return context.Response.WriteAsync(result);
+      },
+             OnAuthenticationFailed = ctx =>
       {
         Console.WriteLine("JWT Authentication Failed: " + ctx.Exception?.Message);
         return Task.CompletedTask;
@@ -77,10 +117,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Chay local thi bat doan nay len
 if (FirebaseApp.DefaultInstance == null)
 {
-    FirebaseApp.Create(new AppOptions()
-    {
-        Credential = GoogleCredential.FromFile("vertex.json")
-    });
+  FirebaseApp.Create(new AppOptions()
+  {
+    Credential = GoogleCredential.FromFile("vertex.json")
+  });
 }
 // Push len git thi bat doan nay len
 // if (FirebaseApp.DefaultInstance == null)

@@ -1,9 +1,11 @@
-namespace be_dotnet_ecommerce1.Model
+namespace dotnet.Model;
+public class Category
 {
-    public class Category
-    {
-        public int _id { get; set; }
-        public string? name_category { get; set; }
-        public int? parent_id { get; set; }
-    }
+    public int id { get; set; }
+    public string namecategory { get; set; } = null!;
+    public int? idparent { get; set; }
+
+    public Category? Parent { get; set; }
+    public ICollection<Category> Children { get; set; } = new List<Category>();
+    public ICollection<Product> Products { get; set; } = new List<Product>();
 }

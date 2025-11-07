@@ -1,15 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
+using Microsoft.EntityFrameworkCore;
 namespace dotnet.Dtos
 {
+  [Keyless]
   public class UserDTO
   {
-    public string id { get; set; } = string.Empty;
+    public int id { get; set; } 
     public string name { get; set; } = string.Empty;
     public string email { get; set; } = string.Empty;
-    public string rule { get; set; } = string.Empty;
+    public int role { get; set; }
+    public string? avatarImg { get; set; }
+    public string? tel { get; set; }
+    public int? orders { get; set; }
   }
 }
