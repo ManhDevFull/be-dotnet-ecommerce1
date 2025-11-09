@@ -57,6 +57,11 @@ namespace dotnet.Service
       return _repo.DeleteProductAsync(productId);
     }
 
+    public Task<ProductAdminDTO?> GetProductAdminByIdAsync(int productId)
+    {
+      return _repo.GetProductAdminByIdAsync(productId);
+    }
+
     public Task<ProductAdminDTO?> CreateVariantAsync(int productId, VariantAdminCreateRequest request)
     {
       return _repo.CreateVariantAsync(productId, request);

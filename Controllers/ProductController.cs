@@ -1,7 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using be.Service.IService;
-using be_dotnet_ecommerce1.Service;
 using dotnet.Service.IService;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace be_dotnet_ecommerce1.Controllers
 {
@@ -9,7 +14,8 @@ namespace be_dotnet_ecommerce1.Controllers
     [Route("[controller]")]
     public class ProductController : ControllerBase
     {
-        private IProductService _service;
+        private readonly IProductService _service;
+
         public ProductController(IProductService service)
         {
             _service = service;
@@ -26,5 +32,7 @@ namespace be_dotnet_ecommerce1.Controllers
             var result = await _service.getProductByFilter(dTO);
             return Ok(result);
         }
+
+       
     }
 }

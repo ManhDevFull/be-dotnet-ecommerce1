@@ -24,6 +24,7 @@ namespace be.Service.IService
     public Task<ProductAdminDTO?> CreateVariantAsync(int productId, VariantAdminCreateRequest request);
     public Task<ProductAdminDTO?> UpdateVariantAsync(int productId, int variantId, VariantAdminUpdateRequest request);
     public Task<ProductAdminDTO?> DeleteVariantAsync(int productId, int variantId);
+    public Task<ProductAdminDTO?> GetProductAdminByIdAsync(int productId);
   }
 
 }

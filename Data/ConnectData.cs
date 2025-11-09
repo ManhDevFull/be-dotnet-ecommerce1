@@ -1,4 +1,5 @@
 using be_dotnet_ecommerce1.Model;
+using dotnet.Dtos;
 using dotnet.Dtos.admin;
 using dotnet.Model;
 using Microsoft.EntityFrameworkCore;
@@ -83,6 +84,7 @@ GROUP BY
     // DTO / Views
     public DbSet<CategoryAdminDTO> categoryAdmins { get; set; } = null!;
     public DbSet<UserAdminDTO> userAdmins { get; set; } = null!;
+    public DbSet<UserDTO> userDtos { get; set; } = null!;
     public DbSet<ProductAdminDTO> productAdmins { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -104,6 +106,28 @@ GROUP BY
         e.Property(x => x.isdeleted).HasColumnName("isdeleted");
         e.Property(x => x.refreshtoken).HasColumnName("refreshtoken");
         e.Property(x => x.refreshtokenexpires).HasColumnName("refreshtokenexpires");
+      });
+
+      modelBuilder.Entity<UserDTO>(e =>
+      {
+        e.HasNoKey();
+        e.ToSqlQuery(@"
+          SELECT
+            0 AS id,
+            '' AS name,
+            '' AS email,
+            0 AS role,
+            '' AS avatarimg,
+            '' AS tel,
+            0 AS orders
+          WHERE 1 = 0");
+        e.Property(x => x.id).HasColumnName("id");
+        e.Property(x => x.name).HasColumnName("name");
+        e.Property(x => x.email).HasColumnName("email");
+        e.Property(x => x.role).HasColumnName("role");
+        e.Property(x => x.avatarImg).HasColumnName("avatarimg");
+        e.Property(x => x.tel).HasColumnName("tel");
+        e.Property(x => x.orders).HasColumnName("orders");
       });
       // -------- email_verification --------
       modelBuilder.Entity<EmailVerification>(e =>
