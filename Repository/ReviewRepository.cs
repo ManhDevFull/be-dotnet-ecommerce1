@@ -28,97 +28,100 @@ namespace dotnet.Repository
         DateTime? fromDate,
         DateTime? toDate)
     {
-      page = Math.Max(1, page);
-      size = Math.Clamp(size, 1, 100);
-      var offset = (page - 1) * size;
+      // page = Math.Max(1, page);
+      // size = Math.Clamp(size, 1, 100);
+      // var offset = (page - 1) * size;
 
-      var query = _connect.reviews
-          .AsNoTracking()
-          .Include(r => r.order)
-            .ThenInclude(o => o.account)
-          .Include(r => r.order)
-            .ThenInclude(o => o.variant)
-              .ThenInclude(v => v.product)
-          .AsQueryable();
+      // var query = _connect.reviews
+      //     .AsNoTracking()
+      //     .Include(r => r.order)
+      //       .ThenInclude(o => o.account)
+      //     .Include(r => r.order)
+      //       .ThenInclude(o => o.variant)
+      //         .ThenInclude(v => v.product)
+      //     .AsQueryable();
 
-      if (rating.HasValue)
-      {
-        query = query.Where(r => r.rating == rating.Value);
-      }
+      // if (rating.HasValue)
+      // {
+      //   query = query.Where(r => r.rating == rating.Value);
+      // }
 
-      if (updated.HasValue)
-      {
-        query = query.Where(r => r.isupdated == updated.Value);
-      }
+      // if (updated.HasValue)
+      // {
+      //   query = query.Where(r => r.isupdated == updated.Value);
+      // }
 
-      if (fromDate.HasValue)
-      {
-        var from = DateTime.SpecifyKind(fromDate.Value.Date, DateTimeKind.Utc);
-        query = query.Where(r => r.createdate >= from);
-      }
+      // if (fromDate.HasValue)
+      // {
+      //   var from = DateTime.SpecifyKind(fromDate.Value.Date, DateTimeKind.Utc);
+      //   query = query.Where(r => r.createdate >= from);
+      // }
 
-      if (toDate.HasValue)
-      {
-        var to = DateTime.SpecifyKind(toDate.Value.Date.AddDays(1), DateTimeKind.Utc);
-        query = query.Where(r => r.createdate < to);
-      }
+      // if (toDate.HasValue)
+      // {
+      //   var to = DateTime.SpecifyKind(toDate.Value.Date.AddDays(1), DateTimeKind.Utc);
+      //   query = query.Where(r => r.createdate < to);
+      // }
 
-      if (!string.IsNullOrWhiteSpace(keyword))
-      {
-        var trimmed = keyword.Trim();
-        var pattern = $"%{trimmed}%";
-        query = query.Where(r =>
-            EF.Functions.ILike(r.content ?? string.Empty, pattern) ||
-            EF.Functions.ILike(r.order.account.firstname + " " + r.order.account.lastname, pattern) ||
-            EF.Functions.ILike(r.order.account.email ?? string.Empty, pattern) ||
-            EF.Functions.ILike(r.order.variant.product.nameproduct ?? string.Empty, pattern));
-      }
+      // if (!string.IsNullOrWhiteSpace(keyword))
+      // {
+      //   var trimmed = keyword.Trim();
+      //   var pattern = $"%{trimmed}%";
+      //   query = query.Where(r =>
+      //       EF.Functions.ILike(r.content ?? string.Empty, pattern) ||
+      //       EF.Functions.ILike(r.order.account.firstname + " " + r.order.account.lastname, pattern) ||
+      //       EF.Functions.ILike(r.order.account.email ?? string.Empty, pattern) ||
+      //       EF.Functions.ILike(r.order.variant.product.nameproduct ?? string.Empty, pattern));
+      // }
 
-      var total = await query.CountAsync();
+      // var total = await query.CountAsync();
 
-      var reviews = await query
-          .OrderByDescending(r => r.createdate)
-          .Skip(offset)
-          .Take(size)
-          .ToListAsync();
+      // var reviews = await query
+      //     .OrderByDescending(r => r.createdate)
+      //     .Skip(offset)
+      //     .Take(size)
+      //     .ToListAsync();
 
-      var items = reviews.Select(MapToDto).ToList();
+      // var items = reviews.Select(MapToDto).ToList();
 
-      return new PagedResult<ReviewAdminDTO>
-      {
-        Items = items,
-        Total = total,
-        Page = page,
-        Size = size
-      };
+      // return new PagedResult<ReviewAdminDTO>
+      // {
+      //   Items = items,
+      //   Total = total,
+      //   Page = page,
+      //   Size = size
+      // };
+      return null;
     }
 
     public async Task<ReviewAdminDTO?> GetReviewDetailAsync(int reviewId)
     {
-      var review = await _connect.reviews
-          .AsNoTracking()
-          .Include(r => r.order)
-            .ThenInclude(o => o.account)
-          .Include(r => r.order)
-            .ThenInclude(o => o.variant)
-              .ThenInclude(v => v.product)
-          .FirstOrDefaultAsync(r => r.id == reviewId);
+      // var review = await _connect.reviews
+      //     .AsNoTracking()
+      //     .Include(r => r.order)
+      //       .ThenInclude(o => o.account)
+      //     .Include(r => r.order)
+      //       .ThenInclude(o => o.variant)
+      //         .ThenInclude(v => v.product)
+      //     .FirstOrDefaultAsync(r => r.id == reviewId);
 
-      return review == null ? null : MapToDto(review);
+      // return review == null ? null : MapToDto(review);
+      return null;
     }
 
     public async Task<ReviewAdminSummaryDTO> GetSummaryAsync()
     {
-      var summary = new ReviewAdminSummaryDTO();
+      // var summary = new ReviewAdminSummaryDTO();
 
-      summary.Total = await _connect.reviews.AsNoTracking().CountAsync();
-      summary.Updated = await _connect.reviews.AsNoTracking().CountAsync(r => r.isupdated);
+      // summary.Total = await _connect.reviews.AsNoTracking().CountAsync();
+      // summary.Updated = await _connect.reviews.AsNoTracking().CountAsync(r => r.isupdated);
 
-      summary.AverageRating = await _connect.reviews.AsNoTracking()
-          .Select(r => (double?)r.rating)
-          .AverageAsync() ?? 0;
+      // summary.AverageRating = await _connect.reviews.AsNoTracking()
+      //     .Select(r => (double?)r.rating)
+      //     .AverageAsync() ?? 0;
 
-      return summary;
+      // return summary;
+      return null;
     }
 
     public async Task<bool> UpdateReviewAsync(int reviewId, bool isUpdated)
@@ -138,27 +141,28 @@ namespace dotnet.Repository
 
     private static ReviewAdminDTO MapToDto(dotnet.Model.Review review)
     {
-      var order = review.order;
-      var account = order?.account;
-      var variant = order?.variant;
-      var product = variant?.product;
+      // var order = review.order;
+      // var account = order?.account;
+      // var variant = order?.variant;
+      // var product = variant?.product;
 
-      return new ReviewAdminDTO
-      {
-        Id = review.id,
-        OrderId = review.orderid,
-        Rating = review.rating,
-        Content = review.content ?? string.Empty,
-        ImageUrls = review.imageurls?.ToList() ?? new List<string>(),
-        CreateDate = review.createdate ?? DateTime.UtcNow,
-        UpdateDate = review.updatedate ?? review.createdate,
-        IsUpdated = review.isupdated,
-        CustomerName = $"{(account?.firstname ?? string.Empty).Trim()} {(account?.lastname ?? string.Empty).Trim()}".Trim(),
-        CustomerEmail = account?.email ?? string.Empty,
-        ProductName = product?.nameproduct ?? string.Empty,
-        ProductImage = product?.imageurls?.FirstOrDefault() ?? string.Empty,
-        VariantAttributes = ExtractAttributes(variant?.valuevariant)
-      };
+      // return new ReviewAdminDTO
+      // {
+      //   Id = review.id,
+      //   OrderId = review.orderid,
+      //   Rating = review.rating,
+      //   Content = review.content ?? string.Empty,
+      //   ImageUrls = review.imageurls?.ToList() ?? new List<string>(),
+      //   CreateDate = review.createdate ?? DateTime.UtcNow,
+      //   UpdateDate = review.updatedate ?? review.createdate,
+      //   IsUpdated = review.isupdated,
+      //   CustomerName = $"{(account?.firstname ?? string.Empty).Trim()} {(account?.lastname ?? string.Empty).Trim()}".Trim(),
+      //   CustomerEmail = account?.email ?? string.Empty,
+      //   ProductName = product?.nameproduct ?? string.Empty,
+      //   ProductImage = product?.imageurls?.FirstOrDefault() ?? string.Empty,
+      //   VariantAttributes = ExtractAttributes(variant?.valuevariant)
+      // };
+      return null;
     }
 
     private static Dictionary<string, string> ExtractAttributes(JsonDocument? document)

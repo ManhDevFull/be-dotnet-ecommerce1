@@ -74,6 +74,8 @@ GROUP BY
     public DbSet<Discount> discounts { get; set; } = null!;
     public DbSet<DiscountProduct> discountProducts { get; set; } = null!;
     public DbSet<Order> orders { get; set; } = null!;
+
+    public DbSet<OrderDetail> orderdetails { get; set; } = null!;
     public DbSet<Product> products { get; set; } = null!;
     public DbSet<Review> reviews { get; set; } = null!;
     public DbSet<ShoppingCart> shoppingCarts { get; set; } = null!;
@@ -221,23 +223,17 @@ GROUP BY
         e.ToTable("orders");
         e.HasKey(x => x.id);
         e.Property(x => x.accountid).HasColumnName("account_id");
-        e.Property(x => x.variantid).HasColumnName("variant_id");
         e.Property(x => x.addressid).HasColumnName("address_id");
-        e.Property(x => x.quantity).HasColumnName("quantity");
         e.Property(x => x.orderdate).HasColumnName("orderdate");
         e.Property(x => x.statusorder).HasColumnName("statusorder");
         e.Property(x => x.receivedate).HasColumnName("receivedate");
         e.Property(x => x.typepay).HasColumnName("typepay");
         e.Property(x => x.statuspay).HasColumnName("statuspay");
-
         e.HasOne(x => x.account).WithMany(a => a.orders)
          .HasForeignKey(x => x.accountid).OnDelete(DeleteBehavior.Restrict);
 
         e.HasOne(x => x.address).WithMany(a => a.orders)
          .HasForeignKey(x => x.addressid).OnDelete(DeleteBehavior.Restrict);
-
-        e.HasOne(x => x.variant).WithMany(v => v.orders)
-         .HasForeignKey(x => x.variantid).OnDelete(DeleteBehavior.Restrict);
       });
 
       // -------- product --------
@@ -316,12 +312,29 @@ GROUP BY
         e.Property(x => x.createdate).HasColumnName("createdate");
         e.Property(x => x.updatedate).HasColumnName("updatedate");
         e.Property(x => x.isdeleted).HasColumnName("isdeleted");
-
         e.HasOne(x => x.product)
          .WithMany(p => p.variants)
          .HasForeignKey(x => x.productid)
          .OnDelete(DeleteBehavior.Restrict);
       });
+
+      //--------------orderDetail--------------
+      modelBuilder.Entity<OrderDetail>(e =>
+            {
+                e.ToTable("orderdetail"); 
+                e.HasKey(x => x.id); 
+                e.Property(x => x.idorder).HasColumnName("order_id");
+                e.Property(x => x.idvariant).HasColumnName("variant_id");
+                e.Property(x => x.quantity).HasColumnName("quantity");
+                e.HasOne(d => d.order)
+                    .WithMany(p => p.orderdetails) 
+                    .HasForeignKey(d => d.idorder)
+                    .OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(d => d.variant)
+                    .WithMany(p => p.orderdetails)
+                    .HasForeignKey(d => d.idvariant)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
       // -------- wishlist --------
       modelBuilder.Entity<WishList>(e =>

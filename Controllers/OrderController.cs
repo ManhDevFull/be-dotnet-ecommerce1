@@ -42,7 +42,7 @@ namespace dotnet.Controllers
 
         // ✅ THÊM PHƯƠNG THỨC MỚI NÀY VÀO
         [HttpGet("my-orders/{orderId}")]
-        [Authorize] // Yêu cầu đăng nhập (bất kỳ role nào)
+        [Authorize] 
         public async Task<IActionResult> GetMyOrderDetail(int orderId)
         {
             // 1. Lấy userId từ token

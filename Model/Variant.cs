@@ -1,4 +1,5 @@
 using System.Text.Json;
+using be_dotnet_ecommerce1.Model;
 
 namespace dotnet.Model;
 public class Variant
@@ -15,6 +16,8 @@ public class Variant
 
     public Product product { get; set; } = null!;
     public ICollection<DiscountProduct> discountProduct { get; set; } = new List<DiscountProduct>();
-    public ICollection<Order> orders { get; set; } = new List<Order>();
+
+    public virtual ICollection<OrderDetail> orderdetails { get; set; } = new List<OrderDetail>();
+    
     public ICollection<ShoppingCart> carts { get; set; } = new List<ShoppingCart>();
 }
