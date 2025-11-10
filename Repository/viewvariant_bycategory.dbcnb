@@ -250,24 +250,15 @@ cells:
 
       \r
 
-      \      select distinct view.*\r
+      \ select distinct view.*\r
 
       \            FROM v_products_filter view\r
 
-      \             where  exists (\r
-
-      \                      select 1\r
-
-      \                      from jsonb_array_elements(view.variant) as elem\r
-
-      \                      WHERE ((elem->'valuevariant')->>'namecategory') IN
-      ('iPads')\r
-
-      \                  )\r
+      \             where view.brand  IN ('Vivo')\r
 
       \            order by view.id\r
 
-      \            offset 0 rows\r
+      \            offset 36 rows\r
 
       \            fetch next  9 rows only"
     metadata: {}

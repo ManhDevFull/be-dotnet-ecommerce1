@@ -133,6 +133,137 @@ cells:
 
       \r
 
+      ---- khi thêm bảng orderdetail\r
+
+      DROP VIEW IF EXISTS V_Products_filter;\r
+
+      CREATE OR REPLACE VIEW V_Products_filter AS\r
+
+      WITH review_stats AS (\r
+
+      \ SELECT \r
+
+      \     v.product_id,\r
+
+      \     SUM(r.rating) as sum_rating,\r
+
+      \     COUNT(r.id) as count_review\r
+
+      \  FROM variant v\r
+
+      \  \r
+
+      \    -- ===== PHẦN THAY ĐỔI BẮT ĐẦU TỪ ĐÂY =====\r
+
+      \    -- Thêm bảng 'orderdetail' làm bảng trung gian\r
+
+      \  INNER JOIN orderdetail od ON od.variant_id = v.id \r
+
+      \    -- Nối 'orderdetail' với 'orders' qua order_id\r
+
+      \  INNER JOIN orders o ON o.id = od.order_id\r
+
+      \    -- Bỏ dòng join cũ: INNER JOIN orders o ON o.variant_id = v.id\r
+
+      \    -- ===== PHẦN THAY ĐỔI KẾT THÚC TẠI ĐÂY =====\r
+
+      \  \r
+
+      \  INNER JOIN review r ON r.order_id = o.id\r
+
+      \  WHERE v.isdeleted = false\r
+
+      \  GROUP BY v.product_id\r
+
+      ),\r
+
+      variant_agg AS (\r
+
+      \    -- PHẦN NÀY KHÔNG THAY ĐỔI\r
+
+      \  SELECT \r
+
+      \    v2.product_id,\r
+
+      \    jsonb_agg(\r
+
+      \      jsonb_build_object(\r
+
+      \        'id', v2.id,\r
+
+      \        'valuevariant', v2.valuevariant,\r
+
+      \        'price', v2.price,\r
+
+      \        'stock', v2.stock,\r
+
+      \        'discounts', COALESCE(\r
+
+      \          (\r
+
+      \            SELECT jsonb_agg(\r
+
+      \              jsonb_build_object(\r
+
+      \                'id', d.id,\r
+
+      \                'typediscount', d.typediscount,\r
+
+      \                'discount', d.discount,\r
+
+      \                'starttime', d.starttime,\r
+
+      \                'endtime', d.endtime\r
+
+      \              )\r
+
+      \            )\r
+
+      \            FROM discount_product ds\r
+
+      \            JOIN discount d ON ds.discount_id = d.id\r
+
+      \            WHERE ds.variant_id = v2.id\r
+
+      \          ),\r
+
+      \          '[]'::jsonb\r
+
+      \        )\r
+
+      \      )\r
+
+      \    ) as variants\r
+
+      \  FROM variant v2\r
+
+      \  WHERE v2.isdeleted = false\r
+
+      \  GROUP BY v2.product_id\r
+
+      )\r
+
+      -- Phần SELECT chính của VIEW (bạn chưa cung cấp, nhưng nó sẽ join các CTE
+      ở trên)\r
+
+      -- VÍ DỤ:\r
+
+      -- SELECT p.*, rs.sum_rating, rs.count_review, va.variants\r
+
+      -- FROM product p\r
+
+      -- LEFT JOIN review_stats rs ON p.id = rs.product_id\r
+
+      -- LEFT JOIN variant_agg va ON p.id = va.product_id\r
+
+      -- WHERE p.isdeleted = false;\r
+
+      ------end\r
+
+      select * from orderdetail\r
+
+      \r
+
       \r
 
       SELECT * FROM v_products_filter view ;\r
@@ -399,11 +530,6 @@ cells:
 
       ]\r
 
-      SELECT * from v_variant_filters WHERE cate\r\n"
+      SELECT * from v_products_filter where name ILIKE '%phone%'\r\n"
     metadata: {}
-metadata:
-  conn:
-    id: iwdSQjg3WX78MtqzkipM3
-    name: Ecommerce1_DB
-  database: ecommerce1
-  schema: public
+metadata: {}

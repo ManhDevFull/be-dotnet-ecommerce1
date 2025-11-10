@@ -144,7 +144,7 @@ namespace be_dotnet_ecommerce1.Data
       modelBuilder.Entity<V_ProductFilter>(entity =>
       {
         entity.HasNoKey();
-        entity.ToView("V_Products_filter");
+        entity.ToView("v_products_filter");
       });
       // view V_variant
       modelBuilder.Entity<V_variant>(entity =>

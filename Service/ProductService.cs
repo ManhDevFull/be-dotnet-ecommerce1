@@ -59,6 +59,8 @@ namespace be_dotnet_ecommerce1.Service
         }
       }
       // nối where
+      if (dTO.query != "")
+        conditions.Add($"name ILIKE '%{dTO.query}%'");
       string wheresql = "";
       if (conditions.Any())
         wheresql = " where " + string.Join(" and ", conditions);
